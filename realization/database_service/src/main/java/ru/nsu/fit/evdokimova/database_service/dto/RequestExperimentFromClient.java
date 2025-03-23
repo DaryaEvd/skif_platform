@@ -1,10 +1,9 @@
-package ru.nsu.fit.evdokimova.supervisor.model;
+package ru.nsu.fit.evdokimova.database_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.nsu.fit.evdokimova.supervisor.utils.GeneratorId;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +16,4 @@ public class RequestExperimentFromClient {
     private Long experimentId;
     private String experimentName;
     private List<ModelRequest> models;
-
-    public void generateId() {
-//        this.experimentId = UUID.randomUUID().toString();
-        this.experimentId = GeneratorId.generateId();
-    }
 }
