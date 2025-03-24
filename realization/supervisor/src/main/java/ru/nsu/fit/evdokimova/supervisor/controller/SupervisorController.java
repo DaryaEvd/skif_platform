@@ -39,7 +39,7 @@ public class SupervisorController {
         }
     }
 
-    // todo: here is an error
+//    // todo: here is an error
     /*
 org.springframework.web.client.HttpClientErrorException$BadRequest: 400  on GET request for "http://localhost:8081/api/database/get-start-files/null": "{"timestamp":"2025-03-23T15:58:56.476+00:00","status":400,"error":"Bad Request","path":"/api/database/get-start-files/null"}"
      */
