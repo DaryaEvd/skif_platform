@@ -1,0 +1,24 @@
+services:
+  supervisor:
+    build:
+      context: ./supervisor
+      dockerfile: Dockerfile
+    container_name: supervisor
+    ports:
+      - "8080:8080"
+    networks:
+      - supervisor-network
+
+  database_service:
+    build:
+      context: ./database_service
+      dockerfile: Dockerfile
+    container_name: database_service
+    ports:
+      - "8081:8081"
+    networks:
+      - supervisor-network
+
+networks:
+  supervisor-network:
+    driver: bridge
