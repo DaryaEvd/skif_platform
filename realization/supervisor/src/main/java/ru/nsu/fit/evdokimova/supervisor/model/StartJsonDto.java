@@ -14,5 +14,8 @@ import java.util.Map;
 public class StartJsonDto {
     private Long experimentId;
     private String modelId;
+    private Integer order;
+    private String version;
+    private String experimentName;
     private Map<String, String> parameters;
 }

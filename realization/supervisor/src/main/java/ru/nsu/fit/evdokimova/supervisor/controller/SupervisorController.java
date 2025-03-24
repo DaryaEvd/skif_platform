@@ -12,6 +12,7 @@ import ru.nsu.fit.evdokimova.supervisor.model.StartJsonDto;
 import ru.nsu.fit.evdokimova.supervisor.service.ExperimentService;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -21,32 +22,22 @@ public class SupervisorController {
     private static final Logger logger = LoggerFactory.getLogger(SupervisorController.class);
     private final ExperimentService experimentService;
 
-    private final RestTemplate restTemplate;
-
     @PostMapping("/start")
     public ResponseEntity<String> startExperiment(@RequestBody RequestExperimentFromClient request) {
-        try {
-            request.generateId();
-            experimentService.validateExperiment(request);
+        request.generateId();
+        logger.info("Received experiment: {}", request.getExperimentId());
 
-            experimentService.sendExperimentToDatabase(request);
+        experimentService.processExperiment(request);
 
-            logger.info("Experiment '{}' registered, waiting for processing.", request.getExperimentId());
-            return ResponseEntity.ok("Experiment '" + request.getExperimentId() + "' registered.");
-        } catch (IllegalArgumentException e) {
-            logger.error("Error validation: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        return ResponseEntity.ok(String.format("Experiment '%s' started.", request.getExperimentId()));
     }
 
-//    // todo: here is an error
-    /*
-org.springframework.web.client.HttpClientErrorException$BadRequest: 400  on GET request for "http://localhost:8081/api/database/get-start-files/null": "{"timestamp":"2025-03-23T15:58:56.476+00:00","status":400,"error":"Bad Request","path":"/api/database/get-start-files/null"}"
-     */
-    @GetMapping("/get-experiment/{experimentId}")
-    public List<StartJsonDto> fetchStartFiles(Long experimentId) {
-        String url = "http://localhost:8081/api/database/get-start-files/" + experimentId;
-        ResponseEntity<StartJsonDto[]> response = restTemplate.getForEntity(url, StartJsonDto[].class);
-        return Arrays.asList(response.getBody());
+    @GetMapping("/show-files/{experimentId}")
+    public ResponseEntity<List<StartJsonDto>> getStartFiles(@PathVariable Long experimentId) {
+        List<StartJsonDto> files = experimentService.getStartFiles(experimentId);
+        if (files.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+        return ResponseEntity.ok(files);
     }
 }

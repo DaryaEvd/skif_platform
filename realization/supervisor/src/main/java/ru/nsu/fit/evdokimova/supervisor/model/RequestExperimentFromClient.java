@@ -19,7 +19,6 @@ public class RequestExperimentFromClient {
     private List<ModelRequest> models;
 
     public void generateId() {
-//        this.experimentId = UUID.randomUUID().toString();
         this.experimentId = GeneratorId.generateId();
     }
 }
