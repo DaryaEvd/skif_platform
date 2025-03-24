@@ -1,10 +1,8 @@
 #HOW TO RUN? 
 
-`cd databse_service`  
-потом  
-`docker compose up --build -d` - чтоб БДшку поднять
-
-потом
-- `cd ../`  
 run  
-`docker compose up --build -d` - чтоб сервисы запустились
+`docker compose up --build -d` - чтоб БДшка и сервисы запустились
+
+**
+Если через Intelij Idea, то чтоб БДшку визуально увидеть можно, если прописать
+`jdbc:postgresql://localhost:5432/supervisor`

@@ -11,7 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DatabaseServiceClient {
     private final RestTemplate restTemplate;
-    private final String DATABASE_SERVICE_URL = "http://localhost:8081/api";
+    private final String DATABASE_SERVICE_URL = "http://database_service:8081/api";
 
     public List<ModelRequest> getModelsByExperiment(Long experimentId) {
         String url = DATABASE_SERVICE_URL + "/models/experiment/" + experimentId;

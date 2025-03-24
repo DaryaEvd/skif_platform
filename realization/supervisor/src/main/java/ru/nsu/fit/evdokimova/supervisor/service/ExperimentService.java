@@ -23,13 +23,13 @@ public class ExperimentService {
     }
 
     public List<StartJsonDto> fetchStartFiles(Long experimentId) {
-        String url = "http://localhost:8081/api/database/get-start-files/" + experimentId;
+        String url = "http://database_service:8081/api/database/get-start-files/" + experimentId;
         ResponseEntity<StartJsonDto[]> response = restTemplate.getForEntity(url, StartJsonDto[].class);
         return Arrays.asList(response.getBody());
     }
 
     public void sendExperimentToDatabase(RequestExperimentFromClient request) {
-        String url = "http://localhost:8081/api/database/process-experiment"; //todo: change localhost to conatiner name
+        String url = "http://database_service:8081/api/database/process-experiment";
         try {
             restTemplate.postForEntity(url, request, Void.class);
             logger.info("Experiment '{}' sent to database_service for processing.", request.getExperimentId());
