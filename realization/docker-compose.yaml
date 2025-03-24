@@ -14,11 +14,11 @@ services:
     networks:
       - supervisor-network
 
-  database_service:
+  database-service:
     build:
-      context: ./database_service
+      context: ./database-service
       dockerfile: Dockerfile
-    container_name: database_service
+    container_name: database-service
     depends_on:
       - postgres
     environment:
@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile
     container_name: supervisor
     depends_on:
-      - database_service
+      - database-service
     ports:
       - "8080:8080"
     networks:

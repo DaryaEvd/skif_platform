@@ -45,7 +45,7 @@ org.springframework.web.client.HttpClientErrorException$BadRequest: 400  on GET 
      */
     @GetMapping("/get-experiment/{experimentId}")
     public List<StartJsonDto> fetchStartFiles(Long experimentId) {
-        String url = "http://database_service:8081/api/database/get-start-files/" + experimentId;
+        String url = "http://localhost:8081/api/database/get-start-files/" + experimentId;
         ResponseEntity<StartJsonDto[]> response = restTemplate.getForEntity(url, StartJsonDto[].class);
         return Arrays.asList(response.getBody());
     }

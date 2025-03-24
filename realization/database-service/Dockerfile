@@ -18,5 +18,5 @@ RUN gradle bootJar
 FROM eclipse-temurin:21-jdk-alpine
 ENV APP_HOME=/usr/app
 WORKDIR $APP_HOME
-COPY --from=build $APP_HOME/build/libs/database_service-0.0.1-SNAPSHOT.jar database_service.jar
-ENTRYPOINT ["java", "-jar", "database_service.jar"]
+COPY --from=build $APP_HOME/build/libs/database-service-0.0.1-SNAPSHOT.jar database-service.jar
+ENTRYPOINT ["java", "-jar", "database-service.jar"]
