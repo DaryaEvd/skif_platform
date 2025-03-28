@@ -31,12 +31,14 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation 'com.github.docker-java:docker-java:3.3.0'
-	implementation 'com.github.docker-java:docker-java-core:3.3.0'
-	implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.0'
+//	implementation 'com.github.docker-java:docker-java-core:3.3.0'
+//	implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.0'
 
-	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.1'
+//	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.1'
 
-	implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+//	implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+	implementation 'com.github.docker-java:docker-java-transport-okhttp:3.3.0'
+		implementation 'net.java.dev.jna:jna:5.8.0'
 }
 
 tasks.named('test') {
