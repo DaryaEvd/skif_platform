@@ -1,14 +1,9 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
-import com.fasterxml.jackson.core.exc.StreamWriteException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import ru.nsu.fit.evdokimova.supervisor.model.RequestExperimentFromClient;
 import ru.nsu.fit.evdokimova.supervisor.model.StartJsonDto;
@@ -21,8 +16,7 @@ import java.util.*;
 public class ExperimentService {
     private final Map<Long, List<StartJsonDto>> storedFiles = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
-    private static final String SAVE_PATH = "/home/darya/skif_platform/realization/supervisor/start_json_files/";
-
+    private static final String SAVE_PATH = "/home/darya/skif_platform/development/supervisor/start_json_files/";
 
     public void processExperiment(RequestExperimentFromClient request) {
         logger.info("Processing experiment: {}", request.getExperimentId());
@@ -59,15 +53,16 @@ public class ExperimentService {
     }
 
     private String generateParameterValue(String paramName) {
-        switch (paramName) {
-            case "X_0": return "3";
-            case "V_0": return "5";
-            case "t": return "7";
-            case "a": return "2";
-            default:
+        return switch (paramName) {
+            case "X_0" -> "3";
+            case "V_0" -> "5";
+            case "t" -> "7";
+            case "a" -> "2";
+            default -> {
                 logger.warn("Unknown parameter: {}. Assigned default value: 0", paramName);
-                return "0";
-        }
+                yield "0";
+            }
+        };
     }
 
     private void saveToFile(StartJsonDto startJson) {

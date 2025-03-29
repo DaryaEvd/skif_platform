@@ -7,7 +7,6 @@ import lombok.Setter;
 import ru.nsu.fit.evdokimova.supervisor.utils.GeneratorId;
 
 import java.util.List;
-import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor

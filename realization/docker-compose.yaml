@@ -1,42 +1,9 @@
 services:
-#  postgres:
-#    image: postgres:15
-#    container_name: database_postgres
-#    restart: always
-#    environment:
-#      POSTGRES_DB: supervisor
-#      POSTGRES_USER: admin
-#      POSTGRES_PASSWORD: admin
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-#    networks:
-#      - supervisor-network
-#
-#  database-service:
-#    build:
-#      context: ./database-service
-#      dockerfile: Dockerfile
-#    container_name: database-service
-#    depends_on:
-#      - postgres
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/supervisor
-#      SPRING_DATASOURCE_USERNAME: admin
-#      SPRING_DATASOURCE_PASSWORD: admin
-#    ports:
-#      - "8081:8081"
-#    networks:
-#      - supervisor-network
-
   supervisor:
     build:
       context: ./supervisor
       dockerfile: Dockerfile
     container_name: supervisor
-#    depends_on:
-#      - database-service
     ports:
       - "8080:8080"
     networks:
@@ -45,6 +12,3 @@ services:
 networks:
   supervisor-network:
     driver: bridge
-
-#volumes:
-#  postgres_data:

@@ -5,17 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Map;
+import java.util.List;
 
-@Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class StartJsonDto {
-    private Long experimentId;
+@AllArgsConstructor
+@Setter
+@Getter
+public class ModelRequest {
     private String modelId;
+    private String name;
     private Integer order;
     private String version;
-    private String experimentName;
-    private Map<String, String> parameters;
+    List<String> parametersName;
 }
