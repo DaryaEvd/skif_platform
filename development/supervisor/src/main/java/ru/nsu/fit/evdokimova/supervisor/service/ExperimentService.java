@@ -1,22 +1,29 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import ru.nsu.fit.evdokimova.supervisor.model.RequestExperimentFromClient;
 import ru.nsu.fit.evdokimova.supervisor.model.StartJsonDto;
+import ru.nsu.fit.evdokimova.supervisor.utils.IModelLoader;
+import ru.nsu.fit.evdokimova.supervisor.utils.LocalModelLoader;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@AllArgsConstructor
 @Service
 public class ExperimentService {
     private final Map<Long, List<StartJsonDto>> storedFiles = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
-    private static final String SAVE_PATH = "/home/darya/skif_platform/development/supervisor/start_json_files/";
+    private static final String SAVE_PATH = "/home/darya/skif_platform/development/supervisor/start_json_files/"; // todo: to constants
+
+    private final DockerService dockerService;
+//    private final LocalModelLoader modelLoader; // todo: сделать с интерфейсом потом норм
 
     public void processExperiment(RequestExperimentFromClient request) {
         logger.info("Processing experiment: {}", request.getExperimentId());
@@ -44,6 +51,32 @@ public class ExperimentService {
 
         storedFiles.put(request.getExperimentId(), startFiles);
         logger.info("Experiment {} processed. {} start.json files created.", request.getExperimentId(), startFiles.size());
+
+        if (!startFiles.isEmpty()) {
+            runSingleModel(startFiles.getFirst());
+        }
+    }
+
+    private void runSingleModel(StartJsonDto model) {
+        /*
+        try {
+//            String modelPath = modelLoader.loadModel(model.getModelId(), model.getVersion());
+            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
+            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
+            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
+        } catch (Exception e) {
+            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
+        }
+        */
+
+        try {
+            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
+            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
+
+            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
+        } catch (Exception e) {
+            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
+        }
     }
 
     public List<StartJsonDto> getStartFiles(Long experimentId) {
