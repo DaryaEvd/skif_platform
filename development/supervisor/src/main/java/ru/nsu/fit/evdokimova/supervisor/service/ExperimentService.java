@@ -25,59 +25,64 @@ public class ExperimentService {
     private final DockerService dockerService;
 //    private final LocalModelLoader modelLoader; // todo: сделать с интерфейсом потом норм
 
-    public void processExperiment(RequestExperimentFromClient request) {
-        logger.info("Processing experiment: {}", request.getExperimentId());
+//    public void processExperiment(RequestExperimentFromClient request) {
+//        logger.info("Processing experiment: {}", request.getExperimentId());
+//
+//        List<StartJsonDto> startFiles = new ArrayList<>();
+//        for (ModelRequest model : request.getModels()) {
+//            Map<String, String> parameters = new HashMap<>();
+//
+//            for (String paramName : model.getParametersName()) {
+//                parameters.put(paramName, generateParameterValue(paramName));
+//            }
+//
+//            StartJsonDto startJson = new StartJsonDto(
+//                    request.getExperimentId(),
+//                    model.getModelId(),
+//                    model.getOrder(),
+//                    model.getVersion(),
+//                    request.getExperimentName(),
+//                    parameters
+//            );
+//
+//            startFiles.add(startJson);
+//            saveToFile(startJson);
+//        }
+//
+//        storedFiles.put(request.getExperimentId(), startFiles);
+//        logger.info("Experiment {} processed. {} start.json files created.", request.getExperimentId(), startFiles.size());
+//
+//        if (!startFiles.isEmpty()) {
+//            runSingleModel(startFiles.getFirst());
+//        }
+//    }
 
-        List<StartJsonDto> startFiles = new ArrayList<>();
-        for (ModelRequest model : request.getModels()) {
-            Map<String, String> parameters = new HashMap<>();
-
-            for (String paramName : model.getParametersName()) {
-                parameters.put(paramName, generateParameterValue(paramName));
-            }
-
-            StartJsonDto startJson = new StartJsonDto(
-                    request.getExperimentId(),
-                    model.getModelId(),
-                    model.getOrder(),
-                    model.getVersion(),
-                    request.getExperimentName(),
-                    parameters
-            );
-
-            startFiles.add(startJson);
-            saveToFile(startJson);
-        }
-
-        storedFiles.put(request.getExperimentId(), startFiles);
-        logger.info("Experiment {} processed. {} start.json files created.", request.getExperimentId(), startFiles.size());
-
-        if (!startFiles.isEmpty()) {
-            runSingleModel(startFiles.getFirst());
-        }
-    }
-
-    private void runSingleModel(StartJsonDto model) {
-        /*
-        try {
-//            String modelPath = modelLoader.loadModel(model.getModelId(), model.getVersion());
-            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
-            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
-            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
-        } catch (Exception e) {
-            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
-        }
-        */
-
-        try {
-            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
-            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
-
-            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
-        } catch (Exception e) {
-            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
-        }
-    }
+//    private void runSingleModel(StartJsonDto model) {
+//        /*
+//        try {
+////            String modelPath = modelLoader.loadModel(model.getModelId(), model.getVersion());
+//            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
+//            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
+//            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
+//        } catch (Exception e) {
+//            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
+//        }
+//        */
+//
+//        try {
+//            String modelPath = "/home/darya/RiderProjects/Step1/Step1";
+//            String startJsonPath = SAVE_PATH + "start" + model.getOrder() + ".json";
+//            dockerService.runModelContainer(
+//                    "/home/darya/RiderProjects/Step1/Step1",
+//                    "latest",
+//                    "/home/darya/skif_platform/development/supervisor/start_json_files/start1.json",
+//                    "model-1"
+//            );
+////            dockerService.runModelContainer(modelPath, model.getVersion(), startJsonPath, "model-" + model.getOrder());
+//        } catch (Exception e) {
+//            logger.error("Error starting model {}: {}", model.getModelId(), e.getMessage(), e);
+//        }
+//    }
 
     public List<StartJsonDto> getStartFiles(Long experimentId) {
         List<StartJsonDto> files = storedFiles.getOrDefault(experimentId, Collections.emptyList());

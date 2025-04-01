@@ -1,18 +1,18 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.dockerjava.core.command.LogContainerResultCallback;
 import lombok.AllArgsConstructor;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,13 +21,154 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @AllArgsConstructor
 @Service
 public class DockerService {
+    private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
+    private final DockerClient dockerClient;
+
+    public List<Container> listContainers() {
+        return dockerClient.listContainersCmd().exec();
+    }
+
+    public String buildImage(String dockerfilePath, String tag) throws InterruptedException {
+        return dockerClient.buildImageCmd()
+                .withDockerfile(new File(dockerfilePath))
+                .withTags(new HashSet<>(Collections.singleton(tag)))
+                .exec(new BuildImageResultCallback())
+                .awaitImageId();
+    }
+
+    public String createAndStartContainer(String imageName,
+                                          String hostInputPath,
+                                          String hostOutputPath) {
+        String containerInputPath = "/app/input";
+        String containerOutputPath = "/app/output";
+
+        CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
+                .withHostConfig(HostConfig.newHostConfig())
+                        .withBinds(
+                                new Bind(hostInputPath, new Volume(containerInputPath)),
+                                new Bind(hostOutputPath, new Volume(containerOutputPath))
+                        )
+                        .exec();
+
+        dockerClient.startContainerCmd(container.getId()).exec();
+
+        return container.getId();
+    }
+
+    private void validateProjectStructure(Path projectDir) {
+        if (!Files.exists(projectDir.resolve("Step1.csproj"))) {
+            throw new IllegalArgumentException("Step1.csproj not found in project directory");
+        }
+        if (!Files.exists(projectDir.resolve("Step1.cs"))) {
+            throw new IllegalArgumentException("Program.cs not found in project directory");
+        }
+    }
+
+    private Path createTempProjectStructure(String dockerfileContent, Path sourceProjectDir) throws IOException {
+        Path tempDir = Files.createTempDirectory("docker-build");
+
+        Files.walk(sourceProjectDir)
+                .filter(source -> !source.equals(sourceProjectDir))
+                .forEach(source -> {
+                    Path relativePath = sourceProjectDir.relativize(source);
+                    Path dest = tempDir.resolve(relativePath);
+
+                    try {
+                        if (!Files.exists(dest.getParent())) {
+                            Files.createDirectories(dest.getParent());
+                        }
+
+                        if (Files.isDirectory(source)) {
+                            if (!Files.exists(dest)) {
+                                Files.createDirectory(dest);
+                            }
+                        } else {
+                            Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                        }
+
+                        System.out.println("Copied: " + source + " to " + dest);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to copy file: " + source, e);
+                    }
+                });
+
+        Path dockerfilePath = tempDir.resolve("Dockerfile");
+        Files.writeString(dockerfilePath, dockerfileContent, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
+
+        return tempDir;
+    }
+
+    public String buildDotnetImage(Path projectDir, String tag) throws Exception {
+
+        validateProjectStructure(projectDir);
+
+        if (!Files.isDirectory(projectDir)) {
+            throw new IllegalArgumentException("Project directory not found: " + projectDir);
+        }
+
+        System.out.println("Building image from: " + projectDir);
+        System.out.println("Files in project directory:");
+        Files.list(projectDir).forEach(System.out::println);
+
+        String dockerfileContent = """
+        FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+        WORKDIR /src
+        COPY . .
+        RUN dotnet publish "Step1.csproj" -c Release -o /app/publish
+
+        FROM mcr.microsoft.com/dotnet/runtime:8.0 AS runtime
+        WORKDIR /app
+        COPY --from=build /app/publish .
+
+        RUN mkdir -p /app/input && \\
+            mkdir -p /app/output && \\
+            chmod -R 777 /app/input && \\
+            chmod -R 777 /app/output
+
+        ENTRYPOINT ["dotnet", "Step1.dll"]
+        """;
+
+        try {
+            Path tempDir = createTempProjectStructure(dockerfileContent, projectDir);
+
+            System.out.println("Temporary build directory content:");
+            Files.walk(tempDir).forEach(System.out::println);
+
+            return dockerClient.buildImageCmd()
+                    .withDockerfile(tempDir.resolve("Dockerfile").toFile())
+                    .withBaseDirectory(tempDir.toFile())
+                    .withTags(Set.of(tag))
+                    .exec(new BuildImageResultCallback() {
+                        @Override
+                        public void onNext(BuildResponseItem item) {
+                            if (item.getStream() != null) {
+                                System.out.print(item.getStream());
+                            }
+                            if (item.getError() != null) {
+                                System.err.print(item.getError());
+                            }
+                            super.onNext(item);
+                        }
+                    })
+                    .awaitImageId();
+        } catch (Exception e) {
+            System.err.println("Build failed: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+
+}
+
+/*
     private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
 
     private final DockerClient dockerClient;
@@ -84,7 +225,7 @@ public class DockerService {
 
         FROM mcr.microsoft.com/dotnet/runtime:8.0 AS runtime
         WORKDIR /app
-        COPY --from=build /app/publish . 
+        COPY --from=build /app/publish .
         ENTRYPOINT ["dotnet", "Step1.dll"]
         """;
         Files.write(dockerfilePath, dockerfileContent.getBytes());
@@ -101,34 +242,35 @@ public class DockerService {
     }
 
     private String createAndStartContainer(String imageName, String containerName, String startJsonPath) {
-        CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
-                .withName(containerName)
-                .exec();
-
-        dockerClient.startContainerCmd(container.getId()).exec();
-        logger.info("Container '{}' started", containerName);
-
-        return container.getId();
-
-//        File startJsonFile = new File(startJsonPath);
-//
-//        if (!startJsonFile.exists()) {
-//            throw new RuntimeException("Start JSON file does not exist: " + startJsonPath);
-//        }
-//
-//        HostConfig hostConfig = new HostConfig()
-//                .withBinds(new Bind(startJsonPath, new Volume("/app/data/start.json"), AccessMode.ro));
-//
 //        CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
 //                .withName(containerName)
-//                .withHostConfig(hostConfig)
 //                .exec();
 //
 //        dockerClient.startContainerCmd(container.getId()).exec();
-//        logger.info("Container '{}' started, mounted '{}' as '/app/data/start.json'",
-//                containerName, startJsonPath);
+//        logger.info("Container '{}' started", containerName);
 //
 //        return container.getId();
+
+        File startJsonFile = new File(startJsonPath);
+
+        if (!startJsonFile.exists()) {
+            throw new RuntimeException("Start JSON file does not exist: " + startJsonPath);
+        }
+
+        HostConfig hostConfig = new HostConfig()
+//                .withBinds(new Bind(startJsonPath, new Volume("/app/data/start.json"), AccessMode.ro));
+                .withBinds(new Bind("/home/darya/skif_platform/development/supervisor/start_json_files", new Volume("/app/data"), AccessMode.rw));
+
+        CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
+                .withName(containerName)
+                .withHostConfig(hostConfig)
+                .exec();
+
+        dockerClient.startContainerCmd(container.getId()).exec();
+        logger.info("Container '{}' started, mounted '{}' as '/app/data/start.json'",
+                containerName, startJsonPath);
+
+        return container.getId();
     }
 
     private void processContainerResults(String containerId,
@@ -225,4 +367,4 @@ public class DockerService {
             runModelContainer(name, version, startJsonPath, "model-" + order);
         }
     }
-}
+     */

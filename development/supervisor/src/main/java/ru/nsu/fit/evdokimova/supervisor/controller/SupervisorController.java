@@ -20,22 +20,22 @@ public class SupervisorController {
     private static final Logger logger = LoggerFactory.getLogger(SupervisorController.class);
     private final ExperimentService experimentService;
 
-    @PostMapping("/start")
-    public ResponseEntity<String> startExperiment(@RequestBody RequestExperimentFromClient request) {
-        request.generateId();
-        logger.info("Received experiment: {}", request.getExperimentId());
-
-        experimentService.processExperiment(request);
-
-        return ResponseEntity.ok(String.format("Experiment '%s' started.", request.getExperimentId()));
-    }
-
-    @GetMapping("/show-files/{experimentId}")
-    public ResponseEntity<List<StartJsonDto>> getStartFiles(@PathVariable Long experimentId) {
-        List<StartJsonDto> files = experimentService.getStartFiles(experimentId);
-        if (files.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-        }
-        return ResponseEntity.ok(files);
-    }
+//    @PostMapping("/start")
+//    public ResponseEntity<String> startExperiment(@RequestBody RequestExperimentFromClient request) {
+//        request.generateId();
+//        logger.info("Received experiment: {}", request.getExperimentId());
+//
+//        experimentService.processExperiment(request);
+//
+//        return ResponseEntity.ok(String.format("Experiment '%s' started.", request.getExperimentId()));
+//    }
+//
+//    @GetMapping("/show-files/{experimentId}")
+//    public ResponseEntity<List<StartJsonDto>> getStartFiles(@PathVariable Long experimentId) {
+//        List<StartJsonDto> files = experimentService.getStartFiles(experimentId);
+//        if (files.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+//        }
+//        return ResponseEntity.ok(files);
+//    }
 }
