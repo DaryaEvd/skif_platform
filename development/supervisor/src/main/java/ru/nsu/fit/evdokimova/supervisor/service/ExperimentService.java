@@ -1,21 +1,21 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.nsu.fit.evdokimova.supervisor.model.ExperimentStatus;
+import ru.nsu.fit.evdokimova.supervisor.model.ExperimentResult;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import ru.nsu.fit.evdokimova.supervisor.model.RequestExperimentFromClient;
 import ru.nsu.fit.evdokimova.supervisor.model.StartJsonDto;
-import ru.nsu.fit.evdokimova.supervisor.utils.IModelLoader;
 import ru.nsu.fit.evdokimova.supervisor.utils.LocalModelLoader;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,20 +24,28 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static ru.nsu.fit.evdokimova.supervisor.utils.Constants.*;
+import static ru.nsu.fit.evdokimova.supervisor.utils.Constants.END_JSONS_PATH;
+import static ru.nsu.fit.evdokimova.supervisor.utils.Constants.START_JSONS_PATH;
 
 @AllArgsConstructor
 @Service
 public class ExperimentService {
-    private final Map<Long, List<StartJsonDto>> storedFiles = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
-
-//    private final Map<Long, ExperimentStatus> experimentStatuses = new ConcurrentHashMap<>();
 
     private final DockerService dockerService;
     private final LocalModelLoader modelLoader; // todo: сделать с интерфейсом потом норм
 
     private final Map<Long, List<StartJsonDto>> experimentStartFiles = new ConcurrentHashMap<>();
+
+    private final Map<Long, ExperimentResult> experimentResultsMap = new ConcurrentHashMap<>();
+
+    private final ObjectMapper objectMapper;
+
+    @PostConstruct
+    public void init() {
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     public List<StartJsonDto> getStartFiles(Long experimentId) {
         return experimentStartFiles.getOrDefault(experimentId, Collections.emptyList());
@@ -55,6 +63,11 @@ public class ExperimentService {
         List<StartJsonDto> startJsons = createInitialStartJsons(request);
         saveStartFiles(request.getExperimentId(), startJsons);
 
+        ExperimentResult experimentResult = new ExperimentResult();
+        experimentResult.setExperimentId(request.getExperimentId());
+        experimentResult.setExperimentName(request.getExperimentName());
+        experimentResultsMap.put(request.getExperimentId(), experimentResult);
+
         for (ModelRequest model : sortedModels) {
             StartJsonDto currentJson = findStartJsonForModel(startJsons, model.getOrder());
 
@@ -66,26 +79,74 @@ public class ExperimentService {
 
             dockerService.waitForContainerCompletion(containerId);
             processModelOutput(model, currentJson, startJsons);
+
+            updateExperimentResult(request.getExperimentId(), model.getOrder());
+        }
+
+        calculateFinalResult(request.getExperimentId());
+    }
+
+    private void updateExperimentResult(Long experimentId, int modelOrder) {
+        try {
+            Path outputPath = Path.of(END_JSONS_PATH, String.format("end%d.json", modelOrder));
+            JsonNode resultNode = new ObjectMapper().readTree(outputPath.toFile());
+
+            if (resultNode.has("result")) {
+                double result = resultNode.get("result").asDouble();
+                ExperimentResult expResult = experimentResultsMap.get(experimentId);
+                expResult.getPartialResults().put("model" + modelOrder, result);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to update experiment result", e);
         }
     }
 
-    private List<StartJsonDto> createInitialStartJsons(RequestExperimentFromClient request) {
-//        return request.getModels().stream()
-//                .map(model -> {
-//                    StartJsonDto dto = new StartJsonDto();
-//                    dto.setExperimentId(request.getExperimentId());
-//                    dto.setModelId(model.getModelId());
-//                    dto.setModelName(model.getName());
-//                    dto.setOrder(model.getOrder());
-//                    dto.setVersion(model.getVersion());
-//                    dto.setLanguage(model.getLanguage());
-//                    dto.setExperimentName(request.getExperimentName());
-//                    dto.setParameters(generateParameters(model.getParametersName()));
-//                    dto.setModelPath(model.getModelPath());
-//                    return dto;
-//                })
-//                .toList();
+    private void calculateFinalResult(Long experimentId) {
+        ExperimentResult result = experimentResultsMap.get(experimentId);
 
+        try {
+            Double term1 = result.getPartialResults().get("model1");
+            Double term2 = result.getPartialResults().get("model2");
+            Double term3 = result.getPartialResults().get("model3");
+
+            if (term1 == null || term2 == null || term3 == null) {
+                throw new IllegalStateException("Not all partial results available");
+            }
+
+            double finalValue = term1 + term2 + term3;
+            result.setFinalResult(finalValue);
+            result.setCalculationTime(LocalDateTime.now());
+
+            saveFinalResult(experimentId);
+
+            logger.info("Calculated final result for experiment {}: {}",
+                    experimentId, result);
+
+        } catch (Exception e) {
+            logger.error("Failed to calculate final result for experiment {}", experimentId, e);
+            throw new RuntimeException("Final result calculation failed", e);
+        }
+    }
+
+    private void saveFinalResult(Long experimentId) {
+        try {
+            Path resultPath = Path.of(END_JSONS_PATH,
+                    String.format("experiment_%d_result.json", experimentId));
+
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+            objectMapper.writeValue(resultPath.toFile(),
+                    experimentResultsMap.get(experimentId));
+        } catch (IOException e) {
+            logger.error("Failed to save final experiment result", e);
+            throw new RuntimeException("Failed to save experiment result", e);
+        }
+    }
+
+    public ExperimentResult getExperimentResult(Long experimentId) {
+        return experimentResultsMap.get(experimentId);
+    }
+
+    private List<StartJsonDto> createInitialStartJsons(RequestExperimentFromClient request) {
         return request.getModels().stream()
                 .map(model -> new StartJsonDto(
                         request.getExperimentId(),
@@ -105,7 +166,6 @@ public class ExperimentService {
     private Map<String, String> generateInitialParameters(List<String> paramNames) {
         Map<String, String> params = new HashMap<>();
         for (String param : paramNames) {
-            // Разделяем параметры, если они переданы через запятую
             String[] individualParams = param.split(",\\s*");
             for (String p : individualParams) {
                 params.put(p, generateParameterValue(p));
@@ -133,7 +193,8 @@ public class ExperimentService {
 
             ObjectMapper mapper = new ObjectMapper();
             Map<String, String> results = mapper.readValue(outputPath.toFile(),
-                    new TypeReference<Map<String, String>>() {});
+                    new TypeReference<>() {
+                    });
 
             if (model.getOrder() < allStartJsons.size()) {
                 StartJsonDto nextJson = findStartJsonForModel(allStartJsons, model.getOrder() + 1);
@@ -160,26 +221,6 @@ public class ExperimentService {
         }
     }
 
-    private Map<String, String> parseResults(JsonNode resultNode) {
-        Map<String, String> results = new HashMap<>();
-
-        if (resultNode.isObject()) {
-            resultNode.fields().forEachRemaining(entry -> {
-                if (entry.getValue().isValueNode()) {
-                    results.put(entry.getKey(), entry.getValue().asText());
-                }
-            });
-        }
-
-        return results;
-    }
-
-    private Map<String, String> generateParameters(List<String> paramNames) {
-        Map<String, String> params = new HashMap<>();
-        paramNames.forEach(name -> params.put(name, generateParameterValue(name)));
-        return params;
-    }
-
     private String generateParameterValue(String paramName) {
         return switch (paramName) {
             case "X_0" -> "3";
@@ -189,32 +230,6 @@ public class ExperimentService {
             default -> "0";
         };
     }
-
-//    public ExperimentStatus getExperimentStatus(Long experimentId) {
-//        return experimentStatuses.getOrDefault(experimentId,
-//                new ExperimentStatus(experimentId, null, 0, 0, "NOT_FOUND", LocalDateTime.now(), Map.of()));
-//    }
-
-//    private void updateExperimentStatus(Long experimentId, ModelRequest model, String status) {
-//        ExperimentStatus expStatus = experimentStatuses.computeIfAbsent(experimentId,
-//                id -> new ExperimentStatus(id, null, 0, 0, "RUNNING", LocalDateTime.now(), new HashMap<>()));
-//
-//        expStatus.setCurrentModel(model.getName());
-//        expStatus.setCurrentOrder(model.getOrder());
-//        expStatus.setLastUpdated(LocalDateTime.now());
-//        expStatus.setStatus(status);
-//
-//        ExperimentStatus.ModelStatus modelStatus = expStatus.getModelStatuses().computeIfAbsent(model.getOrder(),
-//                order -> new ExperimentStatus.ModelStatus());
-//
-//        modelStatus.setModelName(model.getName());
-//        modelStatus.setStatus(status);
-//        if ("RUNNING".equals(status)) {
-//            modelStatus.setStartTime(LocalDateTime.now());
-//        } else if ("COMPLETED".equals(status) || "FAILED".equals(status)) {
-//            modelStatus.setEndTime(LocalDateTime.now());
-//        }
-//    }
 
     private Path saveModelInputJson(StartJsonDto startJson, int order) {
         try {
@@ -227,6 +242,9 @@ public class ExperimentService {
 
             Path filePath = dirPath.resolve(filename);
             ObjectMapper objectMapper = new ObjectMapper();
+
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
             objectMapper.writeValue(filePath.toFile(), startJson);
 
             logger.info("Saved input JSON for model {} (order {}) at {}",

@@ -1,13 +1,14 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
-import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.*;
-import com.github.dockerjava.api.model.AccessMode;
-import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
+import com.github.dockerjava.api.command.BuildImageResultCallback;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.WaitContainerResultCallback;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Volume;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -16,15 +17,13 @@ import org.springframework.stereotype.Service;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import ru.nsu.fit.evdokimova.supervisor.utils.DockerGeneration.IDockerfileGenerator;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static ru.nsu.fit.evdokimova.supervisor.utils.Constants.*;
 
@@ -98,8 +97,6 @@ public class DockerService {
         return container.getId();
     }
 
-    private static final Duration CONTAINER_TIMEOUT = Duration.ofMinutes(10);
-
     void waitForContainerCompletion(String containerId) {
         try {
             dockerClient.waitContainerCmd(containerId)
@@ -122,5 +119,4 @@ public class DockerService {
             throw new RuntimeException("Container execution failed", e);
         }
     }
-
 }

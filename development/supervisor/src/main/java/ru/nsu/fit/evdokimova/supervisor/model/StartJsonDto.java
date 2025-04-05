@@ -23,8 +23,4 @@ public class StartJsonDto {
     private Map<String, String> parameters;
     private Map<String, String> previousResults = new HashMap<>();
     private String modelPath;
-
-    public void addPreviousResult(String key, String value) {
-        this.previousResults.put(key, value);
-    }
 }

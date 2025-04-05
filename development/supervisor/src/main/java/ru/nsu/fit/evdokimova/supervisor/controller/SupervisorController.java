@@ -6,10 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.nsu.fit.evdokimova.supervisor.model.ExperimentResponse;
-import ru.nsu.fit.evdokimova.supervisor.model.ExperimentStatus;
-import ru.nsu.fit.evdokimova.supervisor.model.RequestExperimentFromClient;
-import ru.nsu.fit.evdokimova.supervisor.model.StartJsonDto;
+import ru.nsu.fit.evdokimova.supervisor.model.*;
 import ru.nsu.fit.evdokimova.supervisor.service.ExperimentService;
 
 import java.time.LocalDateTime;
@@ -58,14 +55,14 @@ public class SupervisorController {
         }
     }
 
-//    @GetMapping("/status/{experimentId}")
-//    public ResponseEntity<ExperimentStatus> getExperimentStatus(@PathVariable Long experimentId) {
-//        try {
-//            ExperimentStatus status = experimentService.getExperimentStatus(experimentId);
-//            return ResponseEntity.ok(status);
-//        } catch (Exception e) {
-//            logger.error("Error getting status for experiment {}", experimentId, e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//    }
+    @GetMapping("/result/{experimentId}")
+    public ResponseEntity<ExperimentResult> getExperimentResult(
+            @PathVariable Long experimentId) {
+        ExperimentResult result = experimentService.getExperimentResult(experimentId);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(result);
+    }
+
 }

@@ -1,1 +1,17 @@
-{"experimentId":1,"modelId":"model-003","modelName":"position-calculator","order":3,"version":"1.0.0","language":"CSHARP","experimentName":"kinematic-calculations","parameters":{"a":"2","t":"7"},"previousResults":{"velocity-calculator_result":"35.0"},"modelPath":"/home/darya/a-la-models/Step1/Step1"}
+{
+  "experimentId" : 1,
+  "modelId" : "model-003",
+  "modelName" : "position-calculator",
+  "order" : 3,
+  "version" : "1.0.0",
+  "language" : "CSHARP",
+  "experimentName" : "kinematic-calculations",
+  "parameters" : {
+    "a" : "2",
+    "t" : "7"
+  },
+  "previousResults" : {
+    "velocity-calculator_result" : "35.0"
+  },
+  "modelPath" : "/home/darya/a-la-models/Step1/Step1"
+}
