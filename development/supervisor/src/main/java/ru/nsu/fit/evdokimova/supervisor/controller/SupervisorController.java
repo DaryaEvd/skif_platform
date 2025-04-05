@@ -27,7 +27,7 @@ public class SupervisorController {
     public ResponseEntity<ExperimentResponse> startExperiment(@RequestBody RequestExperimentFromClient request) {
         try {
             request.generateId();
-            logger.info("Received experiment: {}", request.getExperimentId());
+            logger.info("Received experiment with ID: {}", request.getExperimentId());
 
             experimentService.processExperiment(request);
 
@@ -58,14 +58,14 @@ public class SupervisorController {
         }
     }
 
-    @GetMapping("/status/{experimentId}")
-    public ResponseEntity<ExperimentStatus> getExperimentStatus(@PathVariable Long experimentId) {
-        try {
-            ExperimentStatus status = experimentService.getExperimentStatus(experimentId);
-            return ResponseEntity.ok(status);
-        } catch (Exception e) {
-            logger.error("Error getting status for experiment {}", experimentId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+//    @GetMapping("/status/{experimentId}")
+//    public ResponseEntity<ExperimentStatus> getExperimentStatus(@PathVariable Long experimentId) {
+//        try {
+//            ExperimentStatus status = experimentService.getExperimentStatus(experimentId);
+//            return ResponseEntity.ok(status);
+//        } catch (Exception e) {
+//            logger.error("Error getting status for experiment {}", experimentId, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
 }

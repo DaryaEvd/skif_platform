@@ -2,10 +2,7 @@ package ru.nsu.fit.evdokimova.supervisor.service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.model.AccessMode;
@@ -23,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -51,9 +49,14 @@ public class DockerService {
 
         Path tempDir = prepareTempDirectory(projectDir, dockerfileContent);
 
-        String imageName = buildImage(tempDir, model.getName().toLowerCase());
+        try {
+        String imageName = buildImage(tempDir, "model-" + model.getOrder());
+        logger.info("built image with name {}", imageName);
 
-        return runContainer(imageName);
+        return runContainer(imageName, model.getOrder());
+        } finally {
+            FileUtils.deleteDirectory(tempDir.toFile());
+        }
     }
 
     private Path prepareTempDirectory(Path sourceDir, String dockerfileContent) throws IOException {
@@ -74,17 +77,50 @@ public class DockerService {
                 .awaitImageId();
     }
 
-    private String runContainer(String imageName) {
-        CreateContainerResponse container = dockerClient.createContainerCmd(imageName)
-                .withHostConfig(HostConfig.newHostConfig())
-                .withBinds(
-                        new Bind(INPUT_PATH_HOST, new Volume(INPUT_PATH_CONTAINER)),
-                        new Bind(OUTPUT_PATH_HOST, new Volume(OUTPUT_PATH_CONTAINER))
-                )
-                .exec();
+    private String runContainer(String imageName, int order) {
+        CreateContainerResponse container = dockerClient
+            .createContainerCmd(imageName)
+            .withHostConfig(HostConfig.newHostConfig())
+            .withBinds(
+                new Bind(
+                    INPUT_PATH_HOST,
+                    new Volume(INPUT_PATH_CONTAINER)
+                ),
+                new Bind(
+                    OUTPUT_PATH_HOST,
+                    new Volume(OUTPUT_PATH_CONTAINER ))
+            )
+            .exec();
+
+        logger.info("container is going to start");
 
         dockerClient.startContainerCmd(container.getId()).exec();
         return container.getId();
+    }
+
+    private static final Duration CONTAINER_TIMEOUT = Duration.ofMinutes(10);
+
+    void waitForContainerCompletion(String containerId) {
+        try {
+            dockerClient.waitContainerCmd(containerId)
+                    .exec(new WaitContainerResultCallback())
+                    .awaitCompletion(CONTAINER_TIMEOUT.toMinutes(), TimeUnit.MINUTES);
+
+            InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
+            if (inspect.getState().getExitCode() != 0) {
+                throw new RuntimeException(String.format(
+                        "Container %s failed with exit code %d. Error: %s",
+                        containerId,
+                        inspect.getState().getExitCode(),
+                        inspect.getState().getError()
+                ));
+            }
+
+            logger.info("Container {} completed successfully", containerId);
+        } catch (Exception e) {
+            logger.error("Error waiting for container {}", containerId, e);
+            throw new RuntimeException("Container execution failed", e);
+        }
     }
 
 }
