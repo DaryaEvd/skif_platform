@@ -1,5 +1,8 @@
 package ru.nsu.fit.evdokimova.supervisor.utils.DockerGeneration;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class CsharpDockerGenerator implements IDockerfileGenerator {
     @Override
     public String generateDockerfile() {
