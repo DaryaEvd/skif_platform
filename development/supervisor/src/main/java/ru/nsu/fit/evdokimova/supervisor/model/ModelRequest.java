@@ -16,5 +16,7 @@ public class ModelRequest {
     private String name;
     private Integer order;
     private String version;
-    List<String> parametersName;
+    private ModelLanguage language;
+    private String modelPath;
+    private List<String> parametersName;
 }
