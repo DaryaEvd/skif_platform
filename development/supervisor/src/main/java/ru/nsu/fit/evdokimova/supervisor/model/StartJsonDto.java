@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -14,8 +15,12 @@ import java.util.Map;
 public class StartJsonDto {
     private Long experimentId;
     private String modelId;
+    private String modelName;
     private Integer order;
     private String version;
+    private ModelLanguage language;
     private String experimentName;
     private Map<String, String> parameters;
+    private Map<String, String> previousResults = new HashMap<>();
+    private String modelPath;
 }
