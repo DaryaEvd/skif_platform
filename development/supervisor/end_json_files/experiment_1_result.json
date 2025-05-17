@@ -7,6 +7,6 @@
     "model1" : 6.0
   },
   "finalResult" : 90.0,
-  "calculationTime" : "2025-04-06T02:28:45.778",
+  "calculationTime" : "2025-05-17T16:16:07.431",
   "formula" : "X = X_0 * 2 + V_0 * t + (a * (t^2) / 2)"
 }
