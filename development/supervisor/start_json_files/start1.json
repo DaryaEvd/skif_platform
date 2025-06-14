@@ -1,0 +1,14 @@
+{
+  "experimentId" : 1,
+  "modelId" : "model-001",
+  "modelName" : "velocity-calculator",
+  "order" : 1,
+  "version" : "1.2.0",
+  "language" : "C",
+  "experimentName" : "kinematic-calculations",
+  "parameters" : {
+    "X_0" : "3"
+  },
+  "previousResults" : { },
+  "modelPath" : "/home/darya/a-la-models/c_model_1"
+}
