@@ -97,9 +97,9 @@ int setData() {
 
 ///*
 int setData(void) {
-    char* buffer = readFile("/input/start.json");
+    char* buffer = readFile("/input/start1.json");
     if (!buffer) {
-        fprintf(stderr, "start.json not ready\n");
+        fprintf(stderr, "start1.json not ready\n");
         return -1;
     }
 

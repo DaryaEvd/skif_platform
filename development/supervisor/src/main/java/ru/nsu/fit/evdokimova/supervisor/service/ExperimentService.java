@@ -50,45 +50,58 @@ public class ExperimentService {
     public void processExperiment(RequestExperimentFromClient request) throws Exception {
         logger.info("Starting experiment: {}", request.getExperimentName());
 
-        ModelRequest model = request.getModels().get(0);
+        Integer amountOfModels = request.getModels().size();
+        logger.info("Amount of models: {}", amountOfModels);
 
-        String FIXED_MODEL_PATH = "/home/darya/skif_platform/development/supervisor/models/decc_difract";
-        Path modelSourceDir = Paths.get(FIXED_MODEL_PATH).normalize();
+        for(int i = 0; i < amountOfModels; i++) {
+            ModelRequest model = request.getModels().get(i);
+            Path modelSourceDir = Paths.get(MODELS_ROOT + "/model_0" + model.getOrder()).normalize();
 
-        if (!Files.isDirectory(modelSourceDir)) {
-            throw new IllegalStateException("Model directory not found: " + modelSourceDir);
+            if (!Files.isDirectory(modelSourceDir)) {
+                throw new IllegalArgumentException("Model dir not found: " + modelSourceDir);
+            }
+            logger.info("Model source dir: {}", modelSourceDir);
+
+            if (!Files.isDirectory(modelSourceDir)) {
+                throw new IllegalStateException("Model directory not found: " + modelSourceDir);
+            }
+            logger.info("Using fixed model dir: {}", modelSourceDir);
+
+            String startJsonContent = objectMapper.writeValueAsString(getHardcodedParams(model.getOrder()));
+
+            Path startJsonPathForCurrModel = Paths.get(START_JSON_DIR, "start" + model.getOrder() + ".json");
+
+            Files.createDirectories(startJsonPathForCurrModel.getParent());
+            Files.writeString(startJsonPathForCurrModel, startJsonContent);
+
+            logger.info("start*.json saved to {}", startJsonPathForCurrModel);
+
+            logger.info("after sleep");
+
+            switch (model.getOrder()){
+                case 1:
+                    dockerService.buildAndRunPythonModel(modelSourceDir, startJsonPathForCurrModel);
+                    break;
+
+                case 2:
+                    dockerService.buildAndRunCModel(modelSourceDir, startJsonPathForCurrModel);
+                    break;
+            }
+
+
+            Path containerEndJson = Paths.get(END_JSON_DIR, "end" + model.getOrder() + ".json");
+            Path finalEndJson = Paths.get(END_JSON_DIR, "end" + model.getOrder() + ".json");
+
+            if (Files.exists(containerEndJson)) {
+                Files.move(containerEndJson, finalEndJson, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                logger.info("end.json → end{}.json", model.getOrder());
+            } else {
+                logger.warn("end.json not found after model {} run", model.getName());
+            }
+
+//            startJsonContent = "";
         }
-        logger.info("Using fixed model dir: {}", modelSourceDir);
 
-        String startJsonContent = objectMapper.writeValueAsString(getHardcodedParams());
-
-        Path startJsonPath = Paths.get(START_JSON_DIR, "start" + ".json");
-
-        Files.createDirectories(startJsonPath.getParent());
-        Files.writeString(startJsonPath, startJsonContent);
-
-        logger.info("start.json saved to {}", startJsonPath);
-
-        Thread.sleep(3000);
-
-        logger.info("after sleep");
-        if (!Files.isDirectory(modelSourceDir)) {
-            throw new IllegalArgumentException("Model dir not found: " + modelSourceDir);
-        }
-        logger.info("Model source dir: {}", modelSourceDir);
-
-        dockerService.buildAndRunCModel(modelSourceDir, startJsonPath);
-
-        Path containerEndJson = Paths.get(END_JSON_DIR, "end.json");
-        Path finalEndJson = Paths.get(END_JSON_DIR, "end" + ".json");
-
-        // todo: здесь с номером модели разобраться при добавлении моделей
-        if (Files.exists(containerEndJson)) {
-            Files.move(containerEndJson, finalEndJson, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            logger.info("end.json → end{}.json", model.getOrder());
-        } else {
-            logger.warn("end.json not found after model {} run", model.getName());
-        }
 
         logger.info("Experiment '{}' completed successfully", request.getExperimentName());
     }
@@ -99,33 +112,45 @@ public class ExperimentService {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    private Map<String, Object> getHardcodedParams() {
+    private Map<String, Object> getHardcodedParams(Integer order) {
         Map<String, Object> params = new HashMap<>();
-        params.put("c_x", 0L);
-        params.put("c_y", 3950000000L);
-        params.put("c_z", 0L);
-        params.put("s_x", 0L);
-        params.put("s_y", 0L);
-        params.put("s_z", 0L);
-        params.put("omega", 0.0);
-        params.put("kappa", 0.0);
-        params.put("phi", 0.0);
-        params.put("xSampleSize", 600000L);
-        params.put("ySampleSize", 600000L);
-        params.put("zSampleSize", 600000L);
-        params.put("d_x", 0L);
-        params.put("d_y", 55000000L);
-        params.put("d_z", 0L);
-        params.put("theta", 0.0);
-        params.put("beta", 0.0);
-        params.put("gammaValue", 0.0);
-        params.put("sU", 50000L);
-        params.put("sB", 50000L);
-        params.put("sR", 50000L);
-        params.put("sL", 50000L);
-        params.put("E_start", 30.0);
-        params.put("E_end", 30.0);
-        params.put("t", 10L);
+        switch (order) {
+            case 1:
+                params.put("E_input", 1800);
+                params.put("h_y_1", 0.2);
+                params.put("h_y_2", 0.2);
+                params.put("h_x_1", 0.2);
+                params.put("h_x_2", 0.1);
+                break;
+
+            case 2:
+                params.put("c_x", 0L);
+                params.put("c_y", 3950000000L);
+                params.put("c_z", 0L);
+                params.put("s_x", 0L);
+                params.put("s_y", 0L);
+                params.put("s_z", 0L);
+                params.put("omega", 0.0);
+                params.put("kappa", 0.0);
+                params.put("phi", 0.0);
+                params.put("xSampleSize", 600000L);
+                params.put("ySampleSize", 600000L);
+                params.put("zSampleSize", 600000L);
+                params.put("d_x", 0L);
+                params.put("d_y", 55000000L);
+                params.put("d_z", 0L);
+                params.put("theta", 0.0);
+                params.put("beta", 0.0);
+                params.put("gammaValue", 0.0);
+                params.put("sU", 50000L);
+                params.put("sB", 50000L);
+                params.put("sR", 50000L);
+                params.put("sL", 50000L);
+                params.put("E_start", 30.0);
+                params.put("E_end", 30.0);
+                params.put("t", 10L);
+                break;
+        }
         return params;
     }
 

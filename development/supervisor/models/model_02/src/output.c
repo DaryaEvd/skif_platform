@@ -33,13 +33,13 @@ int output() {
 	char* json_str = cJSON_Print(json);
 
     printf("you're just before end.json!!!");
-	FILE* file = fopen("/output/end.json", "w");
+	FILE* file = fopen("/output/end2.json", "w");
 	fflush(stdout);
 
 	if (!file) {
 //		printf("File opening error. File: \"end.json\".\n");
 
-    perror("fopen /output/end.json failed");
+    perror("fopen /output/end2.json failed");
 		return 1;
 	}
 

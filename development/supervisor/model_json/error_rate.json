@@ -1,7 +1,7 @@
 {
-	"max_err_abs":	4.32698239650748e-07,
-	"mean":	1.8576764879606822,
-	"max_err":	299.99999952272736,
-	"min_err":	0.63052914018424744,
-	"inters_err":	4.8723583689346741
+	"max_err_abs":	null,
+	"mean":	0,
+	"max_err":	0,
+	"min_err":	10000,
+	"inters_err":	null
 }
