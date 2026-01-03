@@ -62,12 +62,23 @@ public class ExperimentService {
             }
             logger.info("Model source dir: {}", modelSourceDir);
 
-            if (!Files.isDirectory(modelSourceDir)) {
-                throw new IllegalStateException("Model directory not found: " + modelSourceDir);
+            Map<String, Object> startParams = getHardcodedParams(model.getOrder());
+            if (model.getOrder() > 1) {
+                Path previousEndJson = Paths.get(END_JSON_DIR, "end" + (model.getOrder() - 1) + ".json");
+                if (Files.exists(previousEndJson)) {
+                    try {
+                        Map previousOutput = objectMapper.readValue(previousEndJson.toFile(), Map.class);
+                        logger.info("Merging {} entries from {} into model {} params", previousOutput.size(), previousEndJson, model.getOrder());
+                        startParams.putAll(previousOutput);
+                    } catch (Exception e) {
+                        logger.warn("Failed to read/merge previous output from {}: {}", previousEndJson, e.getMessage());
+                    }
+                } else {
+                    logger.warn("Previous output file {} not found — proceeding with hardcoded params only", previousEndJson);
+                }
             }
-            logger.info("Using fixed model dir: {}", modelSourceDir);
 
-            String startJsonContent = objectMapper.writeValueAsString(getHardcodedParams(model.getOrder()));
+            String startJsonContent = objectMapper.writeValueAsString(startParams);
 
             Path startJsonPathForCurrModel = Paths.get(START_JSON_DIR, "start" + model.getOrder() + ".json");
 
