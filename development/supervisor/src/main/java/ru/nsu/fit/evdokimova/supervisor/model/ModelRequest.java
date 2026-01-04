@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @NoArgsConstructor
@@ -19,7 +19,7 @@ public class ModelRequest {
     private Integer order;
     private String version;
     private ModelLanguage language;
-    private String modelPath;
-//    private List<String> parametersName;
-    private Map<String, String> parameters = new HashMap<>();
+    private Path modelPath;
+
+    private Map<String, Object> parameters = new HashMap<>();
 }

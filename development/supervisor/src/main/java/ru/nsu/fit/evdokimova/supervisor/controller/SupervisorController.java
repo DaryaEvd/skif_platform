@@ -41,28 +41,28 @@ public class SupervisorController {
         }
     }
 
-    @GetMapping("/show-files/{experimentId}")
-    public ResponseEntity<List<StartJsonDto>> getStartFiles(@PathVariable Long experimentId) {
-        try {
-            List<StartJsonDto> files = experimentService.getStartFiles(experimentId);
-            if (files.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-            }
-            return ResponseEntity.ok(files);
-        } catch (Exception e) {
-            logger.error("Error getting files for experiment {}", experimentId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
-        }
-    }
+//    @GetMapping("/show-files/{experimentId}")
+//    public ResponseEntity<List<StartJsonDto>> getStartFiles(@PathVariable Long experimentId) {
+//        try {
+//            List<StartJsonDto> files = experimentService.getStartFiles(experimentId);
+//            if (files.isEmpty()) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+//            }
+//            return ResponseEntity.ok(files);
+//        } catch (Exception e) {
+//            logger.error("Error getting files for experiment {}", experimentId, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+//        }
+//    }
 
-    @GetMapping("/result/{experimentId}")
-    public ResponseEntity<ExperimentResult> getExperimentResult(
-            @PathVariable Long experimentId) {
-        ExperimentResult result = experimentService.getExperimentResult(experimentId);
-        if (result == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(result);
-    }
+//    @GetMapping("/result/{experimentId}")
+//    public ResponseEntity<ExperimentResult> getExperimentResult(
+//            @PathVariable Long experimentId) {
+//        ExperimentResult result = experimentService.getExperimentResult(experimentId);
+//        if (result == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        return ResponseEntity.ok(result);
+//    }
 
 }

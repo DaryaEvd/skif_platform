@@ -1,7 +1,7 @@
 import json
 
 # Чтение данных из входного файла
-with open('/input/start1.json', 'r') as file:
+with open('/input/start.json', 'r') as file:
     data = json.load(file)
 
 # Извлечение значений из данных
@@ -20,7 +20,7 @@ output_data = {
     'E_end': E_output
 }
 
-with open('/output/end1.json', 'w') as file:
+with open('/output/end.json', 'w') as file:
     json.dump(output_data, file, indent=2)
 
 '''

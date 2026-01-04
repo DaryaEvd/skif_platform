@@ -16,22 +16,33 @@
 
 ### САМИ МОДЕЛЬКИ
 Код моделек находится [вот здесь](development/supervisor/models)  
-1я моделька Ильи - `model_01`  
-2я модельки Димы - `model_02`
+1я моделька Димы - `model_01` (шторка)    
+2я модельки Димы - `model_02` (дифрактометр)
 
-### КАК ЗАПУСКАТЬ
-Находясь в корне проекта (`development/supervisor`) пишем в терминале
-```gradle build```
-```gradle bootJar```
+### КАК ЗАПУСКАТЬ  
+
+В файле `development/supervisor/src/main/resources/application.properties`  
+надо поменять пути на свои локальные
+`supervisor.models.root`, `supervisor.start.json.dir`, `supervisor.end.json.dir`   
+
+`supervisor.models.root` - это директория с кодом моделей  
+`supervisor.start.json.dir` - это директория с входными параметрами моделей  
+`supervisor.end.json.dir` - это директория с выходными параметрами моделей
+todo: дописать 
+
+Находясь в корне проекта (`development/supervisor`) пишем в терминале  
+```gradle build```  
+Потом  
+```gradle bootJar```  
 
 Для запуска жарника идем в ` build/libs/`:
 ```
 cd build/libs
-```
+```  
 Далее запускаем 
 ```
 java -jar supervisor-0.0.1-SNAPSHOT.jar 
-```
+```   
 
 Открываем `Postman`, делаем `Post` запрос:
 ```
@@ -41,11 +52,23 @@ java -jar supervisor-0.0.1-SNAPSHOT.jar
   "models": [
     {
       "modelId": "1",
-      "name": "difract_model",
+      "name": "shtorka_model",
       "order": 1,
+      "version": "1.0.0",
+      "language": "PYTHON",
+      "modelPath": "model_01",
+      "parametersName": [
+        "E_input",
+        "h_y_1", "h_y_2", "h_x_1", "h_x_2"
+        ]
+    },
+    {
+      "modelId": "2",
+      "name": "difract_model",
+      "order": 2,
       "version": "1.2.0",
       "language": "C",
-      "modelPath": "model_01",
+      "modelPath": "model_02",
       "parametersName": [
         "c_x", "c_y", "c_z",
         "s_x", "s_y", "s_z",
@@ -55,8 +78,9 @@ java -jar supervisor-0.0.1-SNAPSHOT.jar
         "theta", "beta", "gammaValue",
         "sU", "sB", "sR", "sL",
         "E_start", "E_end", "t"
-        ]
+        ]   
     }
   ]
 }
-```
+```   
+
