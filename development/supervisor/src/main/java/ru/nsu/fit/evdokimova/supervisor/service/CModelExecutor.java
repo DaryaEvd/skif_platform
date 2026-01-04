@@ -17,6 +17,7 @@ import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
 @Component
@@ -43,30 +44,29 @@ public class CModelExecutor implements ModelExecutor {
                         Path startFile,
                         Path endDir,
                         Path modelJsonDir) throws Exception {
-        Path modelSourceDir = modelsRoot.resolve(model.getModelPath()).normalize();
 
+        Path modelSourceDir = modelsRoot.resolve(model.getModelPath()).normalize();
+        log.info("Using model source dir: {}", modelSourceDir);
+
+        if (!Files.isDirectory(modelSourceDir)) {
+            throw new IllegalArgumentException(
+                    "Model directory does not exist: " + modelSourceDir
+            );
+        }
 
         Path tempDir = Files.createTempDirectory("c-model-");
-        Path outputDir = Files.createTempDirectory("c-output-");
+//        Path outputDir = Files.createTempDirectory("c-output-");
 
         try {
 
 //            Path modelSourceDir = modelsRoot.resolve(model.getModelPath());
             FileUtils.copyDirectory(modelSourceDir.toFile(), tempDir.toFile());
 
-            if (!Files.isDirectory(modelSourceDir)) {
-                throw new IllegalArgumentException(
-                        "Model directory does not exist: " + modelSourceDir
-                );
-            }
-
-            FileUtils.copyDirectory(model.getModelPath().toFile(), tempDir.toFile());
-
             Files.writeString(
                     tempDir.resolve("Dockerfile"),
-                    """
+                """
                     FROM alpine:latest AS builder
-                    RUN apk add --no-cache build-base cmake jansson-dev
+                    RUN apk add --no-cache build-base cmake jansson-dev git
                     WORKDIR /app
                     COPY . .
                     RUN mkdir build && cd build && cmake .. && make
@@ -75,8 +75,8 @@ public class CModelExecutor implements ModelExecutor {
                     RUN apk add --no-cache jansson
                     WORKDIR /app
                     COPY --from=builder /app/build/difract .
-                    RUN mkdir -p /input /output
-                    CMD ["./difract"]
+                    RUN mkdir -p /input /output /json
+                    CMD ["sh", "-c", "echo START; ls -l /input; cat /input/start.json; echo RUN; ./difract; echo END"]
                     """
             );
 
@@ -85,11 +85,22 @@ public class CModelExecutor implements ModelExecutor {
             dockerClient.buildImageCmd()
                     .withDockerfile(tempDir.resolve("Dockerfile").toFile())
                     .withTags(Set.of(imageName))
-                    .exec(new BuildImageResultCallback())
+                    .exec(new BuildImageResultCallback() {
+                        @Override
+                        public void onNext(com.github.dockerjava.api.model.BuildResponseItem item) {
+                            if (item.getStream() != null) {
+                                log.info("Build: {}", item.getStream().trim());
+                            }
+                        }
+                    })
                     .awaitCompletion();
+            log.info("Image built: {}", imageName);
 
             CreateContainerResponse container =
                     dockerClient.createContainerCmd(imageName)
+                            .withTty(true)
+                            .withAttachStdout(true)
+                            .withAttachStderr(true)
                             .withHostConfig(
                                     HostConfig.newHostConfig().withBinds(
                                             new Bind(
@@ -108,21 +119,36 @@ public class CModelExecutor implements ModelExecutor {
                             )
                             .exec();
 
-            dockerClient.startContainerCmd(container.getId()).exec();
-            dockerClient.waitContainerCmd(container.getId())
-                    .exec(new WaitContainerResultCallback())
+            String containerId = container.getId();
+            log.info("Starting container: {}", containerId);
+            dockerClient.startContainerCmd(containerId).exec();
+
+            WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
+            dockerClient.waitContainerCmd(containerId)
+                    .exec(waitCallback)
                     .awaitCompletion();
 
-            Path endJson = outputDir.resolve("end.json");
-            if (!Files.exists(endJson)) {
-                throw new IllegalStateException("end.json not produced by C model");
+            log.info("!!! Container FINISHED: {}", containerId);
+
+            Path producedEndJson = endDir.resolve("end.json");
+            Path finalEndJson = endDir.resolve("end" + model.getOrder() + ".json");
+
+            if (!Files.exists(producedEndJson)) {
+                throw new IllegalStateException(
+                        "end.json not produced by C model"
+                );
             }
 
-            return endJson;
+            Files.move(
+                    producedEndJson,
+                    finalEndJson,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            return finalEndJson;
 
         } finally {
             FileUtils.deleteDirectory(tempDir.toFile());
         }
     }
 }
-

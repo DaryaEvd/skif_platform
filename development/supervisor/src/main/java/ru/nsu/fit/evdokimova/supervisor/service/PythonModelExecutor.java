@@ -19,6 +19,7 @@ import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
 @Component
@@ -71,7 +72,7 @@ public class PythonModelExecutor implements ModelExecutor {
                     WORKDIR /app
                     COPY . .
                     RUN mkdir -p /input /output /json
-                    CMD ["python", "main.py"]
+                    CMD ["python", "test.py"]
                     """
             );
 
@@ -80,11 +81,22 @@ public class PythonModelExecutor implements ModelExecutor {
             dockerClient.buildImageCmd()
                     .withDockerfile(tempDir.resolve("Dockerfile").toFile())
                     .withTags(Set.of(imageName))
-                    .exec(new BuildImageResultCallback())
+                    .exec(new BuildImageResultCallback() {
+                    @Override
+                        public void onNext(com.github.dockerjava.api.model.BuildResponseItem item) {
+                            if (item.getStream() != null) {
+                                log.info("Build: {}", item.getStream().trim());
+                            }
+                        }
+                    })
                     .awaitCompletion();
+            log.info("Image built: {}", imageName);
 
             CreateContainerResponse container =
                     dockerClient.createContainerCmd(imageName)
+                            .withTty(true)
+                            .withAttachStdout(true)
+                            .withAttachStderr(true)
                             .withHostConfig(
                                     HostConfig.newHostConfig().withBinds(
                                             new Bind(
@@ -103,24 +115,36 @@ public class PythonModelExecutor implements ModelExecutor {
                             )
                             .exec();
 
-            dockerClient.startContainerCmd(container.getId()).exec();
-            dockerClient.waitContainerCmd(container.getId())
-                    .exec(new WaitContainerResultCallback())
+            String containerId = container.getId();
+            log.info("Starting container: {}", containerId);
+            dockerClient.startContainerCmd(containerId).exec();
+
+            WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
+            dockerClient.waitContainerCmd(containerId)
+                    .exec(waitCallback)
                     .awaitCompletion();
 
-            Path endJson = endDir.resolve("end.json");
-            if (!Files.exists(endJson)) {
+            log.info("!!! Container FINISHED: {}", containerId);
+
+            Path producedByContainerEndJson = endDir.resolve("end.json");
+            log.info("Path for end.json file from container: {} ", producedByContainerEndJson.toAbsolutePath());
+            if (!Files.exists(producedByContainerEndJson)) {
                 throw new IllegalStateException(
-                        "end.json not produced by python model at " + endJson
+                        "end.json not produced by python model"
                 );
             }
+            Path finalEndJson = endDir.resolve("end" + model.getOrder() + ".json");
 
-            return endJson;
+            Files.move(
+                    producedByContainerEndJson,
+                    finalEndJson,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            return finalEndJson;
 
         } finally {
             FileUtils.deleteDirectory(tempDir.toFile());
         }
     }
-
-
 }

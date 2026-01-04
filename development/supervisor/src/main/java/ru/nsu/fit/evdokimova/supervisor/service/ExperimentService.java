@@ -55,12 +55,13 @@ public class ExperimentService {
                     "/home/darya/skif_platform/development/supervisor/start_json_files",
 //                    request.getExperimentId().toString(),
 //                    model.getModelId(),
-                    "start.json"
+                    "start" + model.getOrder() + ".json"
             );
             log.info("startFile is: {}", startFile);
 
             Path endDir = Paths.get(
                     "/home/darya/skif_platform/development/supervisor/end_json_files"
+//                    "end" + model.getOrder() + ".json"
 //                    ,request.getExperimentId().toString(),
 //                    model.getModelId()
             );
@@ -100,8 +101,6 @@ public class ExperimentService {
 
         log.info("Experiment {} completed", request.getExperimentName());
     }
-
-
 }
 
 
