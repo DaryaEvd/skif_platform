@@ -5,8 +5,10 @@ import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.core.command.LogContainerResultCallback;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,19 +130,30 @@ public class CModelExecutor implements ModelExecutor {
                     .exec(waitCallback)
                     .awaitCompletion();
 
+            dockerClient.logContainerCmd(containerId)
+                    .withStdOut(true)
+                    .withStdErr(true)
+                    .exec(new LogContainerResultCallback() {
+                        @Override
+                        public void onNext(Frame item) {
+                            log.info("C CONTAINER LOG: {}", new String(item.getPayload()));
+                        }
+                    })
+                    .awaitCompletion();
+
             log.info("!!! Container FINISHED: {}", containerId);
 
-            Path producedEndJson = endDir.resolve("end.json");
-            Path finalEndJson = endDir.resolve("end" + model.getOrder() + ".json");
-
-            if (!Files.exists(producedEndJson)) {
+            Path producedByContainerEndJson = endDir.resolve("end.json");
+            log.info("Path for end.json file from container: {} ", producedByContainerEndJson.toAbsolutePath());
+            if (!Files.exists(producedByContainerEndJson)) {
                 throw new IllegalStateException(
                         "end.json not produced by C model"
                 );
             }
+            Path finalEndJson = endDir.resolve("end" + model.getOrder() + ".json");
 
             Files.move(
-                    producedEndJson,
+                    producedByContainerEndJson,
                     finalEndJson,
                     StandardCopyOption.REPLACE_EXISTING
             );
