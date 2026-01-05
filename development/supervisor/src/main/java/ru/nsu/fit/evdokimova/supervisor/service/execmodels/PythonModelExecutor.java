@@ -1,4 +1,4 @@
-package ru.nsu.fit.evdokimova.supervisor.service;
+package ru.nsu.fit.evdokimova.supervisor.service.execmodels;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
@@ -7,7 +7,6 @@ import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
-import lombok.AllArgsConstructor;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
@@ -56,9 +54,6 @@ public class PythonModelExecutor implements ModelExecutor {
                     "Model directory does not exist: " + modelSourceDir
             );
         }
-
-//        Files.createDirectories(endDir);
-//        Files.createDirectories(modelJsonDir);
 
         Path tempDir = Files.createTempDirectory("python-model-");
 

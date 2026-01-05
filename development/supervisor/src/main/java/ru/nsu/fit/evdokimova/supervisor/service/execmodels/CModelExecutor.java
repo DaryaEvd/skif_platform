@@ -1,4 +1,4 @@
-package ru.nsu.fit.evdokimova.supervisor.service;
+package ru.nsu.fit.evdokimova.supervisor.service.execmodels;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
@@ -9,7 +9,6 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,11 +57,7 @@ public class CModelExecutor implements ModelExecutor {
         }
 
         Path tempDir = Files.createTempDirectory("c-model-");
-//        Path outputDir = Files.createTempDirectory("c-output-");
-
         try {
-
-//            Path modelSourceDir = modelsRoot.resolve(model.getModelPath());
             FileUtils.copyDirectory(modelSourceDir.toFile(), tempDir.toFile());
 
             Files.writeString(

@@ -1,4 +1,4 @@
-package ru.nsu.fit.evdokimova.supervisor.service;
+package ru.nsu.fit.evdokimova.supervisor.service.execmodels;
 
 import ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;

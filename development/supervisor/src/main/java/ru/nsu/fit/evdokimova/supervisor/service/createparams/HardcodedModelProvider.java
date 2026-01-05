@@ -1,4 +1,4 @@
-package ru.nsu.fit.evdokimova.supervisor.service;
+package ru.nsu.fit.evdokimova.supervisor.service.createparams;
 
 import org.springframework.stereotype.Component;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
