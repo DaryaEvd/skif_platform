@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.nsu.fit.evdokimova.supervisor.configuration.MainPaths;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 
@@ -15,9 +16,9 @@ public class PythonModelExecutor
 
     public PythonModelExecutor(
             DockerClient dockerClient,
-            @Value("${supervisor.models.root}") Path modelsRoot
+            MainPaths mainPaths
     ) {
-        super(dockerClient, modelsRoot,
+        super(dockerClient, mainPaths,
                 LoggerFactory.getLogger(PythonModelExecutor.class));
     }
 

@@ -11,6 +11,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
+import ru.nsu.fit.evdokimova.supervisor.configuration.MainPaths;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 
 import java.nio.file.Files;
@@ -25,16 +26,16 @@ public abstract class AbstractDockerModelExecutor
         implements ModelExecutor {
 
     protected final DockerClient dockerClient;
-    protected final Path modelsRoot;
+    protected final MainPaths mainPaths;
     protected final Logger log;
 
     protected AbstractDockerModelExecutor(
             DockerClient dockerClient,
-            Path modelsRoot,
+            MainPaths mainPaths,
             Logger log
     ) {
         this.dockerClient = dockerClient;
-        this.modelsRoot = modelsRoot;
+        this.mainPaths = mainPaths;
         this.log = log;
     }
 
@@ -50,8 +51,7 @@ public abstract class AbstractDockerModelExecutor
             Path modelJsonDir
     ) throws Exception {
 
-        Path modelSourceDir =
-                modelsRoot.resolve(model.getModelPath()).normalize();
+        Path modelSourceDir = mainPaths.getModelsRootDirPath().resolve(model.getModelPath()).normalize();
         log.info("Using model source dir: {}", modelSourceDir);
 
         if (!Files.isDirectory(modelSourceDir)) {
