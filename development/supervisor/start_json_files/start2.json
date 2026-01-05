@@ -1,17 +1,1 @@
-{
-  "experimentId" : 1,
-  "modelId" : "model-002",
-  "modelName" : "velocity-calculator",
-  "order" : 2,
-  "version" : "1.2.0",
-  "language" : "C",
-  "experimentName" : "kinematic-calculations",
-  "parameters" : {
-    "t" : "7",
-    "V_0" : "5"
-  },
-  "previousResults" : {
-    "velocity-calculator_result" : "6.0"
-  },
-  "modelPath" : "/home/darya/a-la-models/c_model_2"
-}
+{"sU":50000,"theta":0.0,"ySampleSize":600000,"E_end":31.515151515151487,"kappa":0.0,"gammaValue":0.0,"c_y":3950000000,"d_x":0,"c_x":0,"E_start":31.515151515151487,"d_z":0,"beta":0.0,"c_z":0,"d_y":55000000,"s_y":0,"s_x":0,"omega":0.0,"xSampleSize":600000,"s_z":0,"sB":50000,"phi":0.0,"zSampleSize":600000,"t":10,"sL":50000,"sR":50000}
