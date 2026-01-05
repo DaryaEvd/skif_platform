@@ -15,10 +15,10 @@ public class HardcodedModelProvider implements IModelDefaultsProvider{
 
         switch (model.getOrder()) {
             case 1 ->  {
-                params.put("E_input", 1800);
-                params.put("h_y_1", 0.2);
-                params.put("h_y_2", 0.2);
-                params.put("h_x_1", 0.2);
+                params.put("E_input", 130);
+                params.put("h_y_1", 0.8);
+                params.put("h_y_2", 0.8);
+                params.put("h_x_1", 0.8);
                 params.put("h_x_2", 0.1);
             }
 

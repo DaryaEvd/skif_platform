@@ -1,6 +1,7 @@
 package ru.nsu.fit.evdokimova.supervisor.service;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
@@ -133,7 +134,7 @@ public class CModelExecutor implements ModelExecutor {
             dockerClient.logContainerCmd(containerId)
                     .withStdOut(true)
                     .withStdErr(true)
-                    .exec(new LogContainerResultCallback() {
+                    .exec(new ResultCallback.Adapter<Frame>() {
                         @Override
                         public void onNext(Frame item) {
                             log.info("C CONTAINER LOG: {}", new String(item.getPayload()));

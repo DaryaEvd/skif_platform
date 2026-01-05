@@ -7,12 +7,12 @@
 #include "../include/variables.h"
 #include <math.h>
 
-extern int64_t c_x, c_y, c_z, s_x, s_y, s_z;
-extern int64_t omega, kappa, phi, d_x, d_y, d_z;
-extern int64_t xSampleSize, ySampleSize, zSampleSize;
-extern int64_t theta, beta, gammaValue, sU, sB, sR, sL;
-extern int64_t E_start, E_end;
-extern int64_t t;
+extern double c_x, c_y, c_z, s_x, s_y, s_z;
+extern double omega, kappa, phi, d_x, d_y, d_z;
+extern double xSampleSize, ySampleSize, zSampleSize;
+extern double theta, beta, gammaValue, sU, sB, sR, sL;
+extern double E_start, E_end;
+extern int t;
 extern double rho, M;
 extern double* s_list;
 extern double cos_a, cos_b, cos_c, sin_a, sin_b, sin_c;
@@ -111,70 +111,70 @@ int setData(void) {
         return -1;
     }
 
-    #define GET_DOUBLE(name, var)                                     \
-        do {                                                          \
-            cJSON* item = cJSON_GetObjectItemCaseSensitive(json, name); \
-            if (!cJSON_IsNumber(item)) {                              \
-                fprintf(stderr, "Missing or invalid field: %s\n", name); \
-                goto error;                                           \
-            }                                                         \
-            var = item->valuedouble;                                  \
-        } while (0)
+     #define GET_NUM(name, var)                                      \
+            do {                                                        \
+                cJSON* item = cJSON_GetObjectItemCaseSensitive(json, name); \
+                if (!cJSON_IsNumber(item)) {                            \
+                    fprintf(stderr, "Missing or invalid field: %s\n", name); \
+                    goto error;                                         \
+                }                                                       \
+                var = item->valuedouble;                                \
+            } while (0)
 
-    #define GET_INT64(name, var)                                      \
-        do {                                                          \
-            cJSON* item = cJSON_GetObjectItemCaseSensitive(json, name); \
-            if (!cJSON_IsNumber(item)) {                              \
-                fprintf(stderr, "Missing or invalid field: %s\n", name); \
-                goto error;                                           \
-            }                                                         \
-            var = (int64_t)item->valuedouble;                         \
-        } while (0)
+        #define GET_INT(name, var)                                      \
+            do {                                                        \
+                cJSON* item = cJSON_GetObjectItemCaseSensitive(json, name); \
+                if (!cJSON_IsNumber(item)) {                            \
+                    fprintf(stderr, "Missing or invalid field: %s\n", name); \
+                    goto error;                                         \
+                }                                                       \
+                var = item->valueint;                                   \
+            } while (0)
 
 
 //    /*
-    GET_INT64("c_x", c_x);
-    GET_INT64("c_y", c_y);
-    GET_INT64("c_z", c_z);
+    GET_NUM("c_x", c_x);
+        GET_NUM("c_y", c_y);
+        GET_NUM("c_z", c_z);
 
-    GET_INT64("s_x", s_x);
-    GET_INT64("s_y", s_y);
-    GET_INT64("s_z", s_z);
+        GET_NUM("s_x", s_x);
+        GET_NUM("s_y", s_y);
+        GET_NUM("s_z", s_z);
 
-    GET_DOUBLE("omega", omega);
-    GET_DOUBLE("kappa", kappa);
-    GET_DOUBLE("phi", phi);
+        GET_NUM("omega", omega);
+        GET_NUM("kappa", kappa);
+        GET_NUM("phi", phi);
 
-    GET_INT64("xSampleSize", xSampleSize);
-    GET_INT64("ySampleSize", ySampleSize);
-    GET_INT64("zSampleSize", zSampleSize);
+        GET_INT("xSampleSize", xSampleSize);
+        GET_INT("ySampleSize", ySampleSize);
+        GET_INT("zSampleSize", zSampleSize);
 
-    GET_INT64("d_x", d_x);
-    GET_INT64("d_y", d_y);
-    GET_INT64("d_z", d_z);
+        GET_NUM("d_x", d_x);
+        GET_NUM("d_y", d_y);
+        GET_NUM("d_z", d_z);
 
-    GET_DOUBLE("theta", theta);
-    GET_DOUBLE("beta", beta);
-    GET_DOUBLE("gammaValue", gammaValue);
+        GET_NUM("theta", theta);
+        GET_NUM("beta", beta);
+        GET_NUM("gammaValue", gammaValue);
 
-    GET_DOUBLE("sU", sU);
-    GET_DOUBLE("sB", sB);
-    GET_DOUBLE("sR", sR);
-    GET_DOUBLE("sL", sL);
+        GET_NUM("sU", sU);
+        GET_NUM("sB", sB);
+        GET_NUM("sR", sR);
+        GET_NUM("sL", sL);
 
-    GET_DOUBLE("E_start", E_start);
-    GET_DOUBLE("E_end", E_end);
+        GET_NUM("E_start", E_start);
+        GET_NUM("E_end", E_end);
 
-    GET_INT64("t", t);
+        GET_INT("t", t);
 
-    cJSON_Delete(json);
-    free(buffer);
-    return 0;
+        cJSON_Delete(json);
+        free(buffer);
+        return 0;
 
-error:
-    cJSON_Delete(json);
-    free(buffer);
-    return -1;
+    error:
+        cJSON_Delete(json);
+        free(buffer);
+        return -1;
 }
 //*/
 
