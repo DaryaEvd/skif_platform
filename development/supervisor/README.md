@@ -14,16 +14,14 @@
 
 ## ПРОВЕРКА РАБОТЫ ЗАПУСКА 2Х МОДЕЛЕЙ
 
-Пока что есть только 2 модельки, их и будем запускать.  
-
 ### САМИ МОДЕЛЬКИ
-Код моделек находится [вот здесь](supervisor/models)  
-1я моделька Димы - `model_01` (шторка)    
-2я модельки Ильи - `model_02` (дифрактометр)
+Код моделек находится [вот здесь](models)  
+1я моделька Димы - `model_01` (шторка) - на питоне   
+2я модельки Ильи - `model_02` (дифрактометр) - на Си   
 
 ### КАК ЗАПУСКАТЬ  
 
-1. В файле [development/supervisor/src/main/resources/application.properties](supervisor/src/main/resources/application.properties)
+1. В файле [application.properties](src/main/resources/application.properties)
 надо поменять пути на свои локальные
 `supervisor.paths.models-root-dir-path`, `supervisor.paths.start-json-dir-path`, `supervisor.paths.end-json-dir-path`, `supervisor.paths.inter-model-json-dir-path`
 
@@ -46,7 +44,7 @@ cd build/libs
 java -jar supervisor-0.0.1-SNAPSHOT.jar 
 ```   
 
-3. Открываем `Postman`, делаем `Post` запрос:
+3. Открываем `Postman`, делаем `Post` запрос на `localhost:8080/api/experiments/start` :
 ```
 {
   "experimenId": "1",
