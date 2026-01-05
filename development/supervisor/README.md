@@ -14,23 +14,25 @@
 
 ## ПРОВЕРКА РАБОТЫ ЗАПУСКА 2Х МОДЕЛЕЙ
 
+Пока что есть только 2 модельки, их и будем запускать.  
+
 ### САМИ МОДЕЛЬКИ
-Код моделек находится [вот здесь](development/supervisor/models)  
+Код моделек находится [вот здесь](supervisor/models)  
 1я моделька Димы - `model_01` (шторка)    
-2я модельки Димы - `model_02` (дифрактометр)
+2я модельки Ильи - `model_02` (дифрактометр)
 
 ### КАК ЗАПУСКАТЬ  
 
-В файле `development/supervisor/src/main/resources/application.properties`  
+1. В файле [development/supervisor/src/main/resources/application.properties](supervisor/src/main/resources/application.properties)
 надо поменять пути на свои локальные
-`supervisor.models.root`, `supervisor.start.json.dir`, `supervisor.end.json.dir`   
+`supervisor.paths.models-root-dir-path`, `supervisor.paths.start-json-dir-path`, `supervisor.paths.end-json-dir-path`, `supervisor.paths.inter-model-json-dir-path`
 
-`supervisor.models.root` - это директория с кодом моделей  
-`supervisor.start.json.dir` - это директория с входными параметрами моделей  
-`supervisor.end.json.dir` - это директория с выходными параметрами моделей
-todo: дописать 
+`supervisor.paths.models-root-dir-path` - это директория с кодом моделей  
+`supervisor.paths.start-json-dir-path` - это директория с входными параметрами моделей (создаёт сам супервизор)  
+`supervisor.paths.end-json-dir-path` - это директория с выходными параметрами моделей (создаёт сам супервизор)  
+`supervisor.paths.inter-model-json-dir-path` - это директория с вспомогательными файлами (пока что сюда просто скопированы доп.файлы для model_02)  
 
-Находясь в корне проекта (`development/supervisor`) пишем в терминале  
+2. Находясь в корне проекта (`development/supervisor`) пишем в терминале  
 ```gradle build```  
 Потом  
 ```gradle bootJar```  
@@ -44,7 +46,7 @@ cd build/libs
 java -jar supervisor-0.0.1-SNAPSHOT.jar 
 ```   
 
-Открываем `Postman`, делаем `Post` запрос:
+3. Открываем `Postman`, делаем `Post` запрос:
 ```
 {
   "experimenId": "1",
@@ -84,3 +86,12 @@ java -jar supervisor-0.0.1-SNAPSHOT.jar
 }
 ```   
 
+1я модель (которая на питоне) работает в контейнере несколько секунд, т.к. рассчёты там пока совсем небольшие, 2я модель (которая на си) - работает ~7мин.  
+
+
+## TODOS  
+- [] Подумать над тем, как нормально обращаться с доп.файлами (кроме стартовых/итоговых), если они используются моделькой. Как их прокидывать. Пока вручную скопированы просто в директорию локальную.  
+- [] Подумать над тем, как прокидывать пути в сам код моделек (чтоб мне как разрабу супервизора не лезть в код моделек, заменяя пути)   
+- [] В `String createDockerfileContent(ModelRequest model)` - там сделать универсально чтоб добавлялось имя команды (при увеличении кол-ва моделей)
+- [] Пофиксить id-шники  
+- [] `.dockerignore` когда-то не был пойман docker-java-api, надо будет с этим разобраться и добавить. Тк, н-р, во 2й модели удалила директорию жирную, которая тянулась из microsoft visual studio (фу).
