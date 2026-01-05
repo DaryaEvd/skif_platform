@@ -1,39 +1,23 @@
 package ru.nsu.fit.evdokimova.supervisor.service.execmodels;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.WaitContainerResultCallback;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Set;
 
 @Component
-public class CModelExecutor implements ModelExecutor {
+public class CModelExecutor extends AbstractDockerModelExecutor {
 
-    private static final Logger log = LoggerFactory.getLogger(CModelExecutor.class);
-
-    private final DockerClient dockerClient;
-
-    @Value("${supervisor.models.root}")
-    private Path modelsRoot;
-
-    public CModelExecutor(DockerClient dockerClient) {
-        this.dockerClient = dockerClient;
+    public CModelExecutor(
+            DockerClient dockerClient,
+            @Value("${supervisor.models.root}") Path modelsRoot
+    ) {
+        super(dockerClient, modelsRoot,
+                LoggerFactory.getLogger(CModelExecutor.class));
     }
 
     @Override
@@ -42,122 +26,25 @@ public class CModelExecutor implements ModelExecutor {
     }
 
     @Override
-    public Path execute(ModelRequest model,
-                        Path startFile,
-                        Path endDir,
-                        Path modelJsonDir) throws Exception {
+    protected String createImageName(ModelRequest model) {
+        return "model-c-" + model.getModelId();
+    }
 
-        Path modelSourceDir = modelsRoot.resolve(model.getModelPath()).normalize();
-        log.info("Using model source dir: {}", modelSourceDir);
-
-        if (!Files.isDirectory(modelSourceDir)) {
-            throw new IllegalArgumentException(
-                    "Model directory does not exist: " + modelSourceDir
-            );
-        }
-
-        Path tempDir = Files.createTempDirectory("c-model-");
-        try {
-            FileUtils.copyDirectory(modelSourceDir.toFile(), tempDir.toFile());
-
-            Files.writeString(
-                    tempDir.resolve("Dockerfile"),
-                """
-                    FROM alpine:latest AS builder
-                    RUN apk add --no-cache build-base cmake jansson-dev git
-                    WORKDIR /app
-                    COPY . .
-                    RUN mkdir build && cd build && cmake .. && make
-
-                    FROM alpine:latest
-                    RUN apk add --no-cache jansson
-                    WORKDIR /app
-                    COPY --from=builder /app/build/difract .
-                    RUN mkdir -p /input /output /json
-                    CMD ["sh", "-c", "echo START; ls -l /input; cat /input/start.json; echo RUN; ./difract; echo END"]
-                    """
-            );
-
-            String imageName = "model-c-" + model.getModelId();
-
-            dockerClient.buildImageCmd()
-                    .withDockerfile(tempDir.resolve("Dockerfile").toFile())
-                    .withTags(Set.of(imageName))
-                    .exec(new BuildImageResultCallback() {
-                        @Override
-                        public void onNext(com.github.dockerjava.api.model.BuildResponseItem item) {
-                            if (item.getStream() != null) {
-                                log.info("Build: {}", item.getStream().trim());
-                            }
-                        }
-                    })
-                    .awaitCompletion();
-            log.info("Image built: {}", imageName);
-
-            CreateContainerResponse container =
-                    dockerClient.createContainerCmd(imageName)
-                            .withTty(true)
-                            .withAttachStdout(true)
-                            .withAttachStderr(true)
-                            .withHostConfig(
-                                    HostConfig.newHostConfig().withBinds(
-                                            new Bind(
-                                                    startFile.toAbsolutePath().toString(),
-                                                    new Volume("/input/start.json")
-                                            ),
-                                            new Bind(
-                                                    endDir.toAbsolutePath().toString(),
-                                                    new Volume("/output")
-                                            ),
-                                            new Bind(
-                                                    modelJsonDir.toAbsolutePath().toString(),
-                                                    new Volume("/json")
-                                            )
-                                    )
-                            )
-                            .exec();
-
-            String containerId = container.getId();
-            log.info("Starting container: {}", containerId);
-            dockerClient.startContainerCmd(containerId).exec();
-
-            WaitContainerResultCallback waitCallback = new WaitContainerResultCallback();
-            dockerClient.waitContainerCmd(containerId)
-                    .exec(waitCallback)
-                    .awaitCompletion();
-
-            dockerClient.logContainerCmd(containerId)
-                    .withStdOut(true)
-                    .withStdErr(true)
-                    .exec(new ResultCallback.Adapter<Frame>() {
-                        @Override
-                        public void onNext(Frame item) {
-                            log.info("C CONTAINER LOG: {}", new String(item.getPayload()));
-                        }
-                    })
-                    .awaitCompletion();
-
-            log.info("!!! Container FINISHED: {}", containerId);
-
-            Path producedByContainerEndJson = endDir.resolve("end.json");
-            log.info("Path for end.json file from container: {} ", producedByContainerEndJson.toAbsolutePath());
-            if (!Files.exists(producedByContainerEndJson)) {
-                throw new IllegalStateException(
-                        "end.json not produced by C model"
-                );
-            }
-            Path finalEndJson = endDir.resolve("end" + model.getOrder() + ".json");
-
-            Files.move(
-                    producedByContainerEndJson,
-                    finalEndJson,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            return finalEndJson;
-
-        } finally {
-            FileUtils.deleteDirectory(tempDir.toFile());
-        }
+    @Override
+    protected String createDockerfileContent(ModelRequest model) {
+        return """
+            FROM alpine:latest AS builder
+            RUN apk add --no-cache build-base cmake jansson-dev git
+            WORKDIR /app
+            COPY . .
+            RUN mkdir build && cd build && cmake .. && make
+            
+            FROM alpine:latest
+            RUN apk add --no-cache jansson
+            WORKDIR /app
+            COPY --from=builder /app/build/difract .
+            RUN mkdir -p /input /output /json
+            CMD ["sh", "-c", "echo START; ls -l /input; cat /input/start.json; echo RUN; ./difract; echo END"]
+            """;
     }
 }

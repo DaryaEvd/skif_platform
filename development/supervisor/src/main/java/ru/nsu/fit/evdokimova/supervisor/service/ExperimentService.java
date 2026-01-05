@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.nsu.fit.evdokimova.supervisor.configuration.MainPaths;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
 import ru.nsu.fit.evdokimova.supervisor.model.RequestExperimentFromClient;
 import ru.nsu.fit.evdokimova.supervisor.service.execmodels.ModelExecutor;
@@ -12,7 +13,6 @@ import ru.nsu.fit.evdokimova.supervisor.service.execmodels.ModelExecutorRegistry
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +26,7 @@ public class ExperimentService {
     private final StartJsonFactory startJsonFactory;
     private final ModelExecutorRegistry executorRegistry;
     private final ObjectMapper objectMapper;
+    private final MainPaths mainPaths;
 
     public void processExperiment(RequestExperimentFromClient request) throws Exception {
 
@@ -46,21 +47,18 @@ public class ExperimentService {
 
             log.info("model's path in experiment service is: {}", model.getModelPath());
 
-            Path startFile = Paths.get(
-                    "/home/darya/skif_platform/development/supervisor/start_json_files",
-                    "start" + model.getOrder() + ".json"
-            );
+            Path startFile =
+//                    "/home/darya/skif_platform/development/supervisor/start_json_files",
+                    mainPaths.getStartJsonDirPath().resolve(
+                    "start" + model.getOrder() + ".json");
+
             log.info("startFile is: {}", startFile);
 
-            Path endDir = Paths.get(
-                    "/home/darya/skif_platform/development/supervisor/end_json_files"
-            );
+            Path endDir = mainPaths.getEndJsonDirPath();
             log.info("end dir is: {}", endDir);
 
-            Path modelJsonDir = Paths.get(
-                    "/home/darya/skif_platform/development/supervisor/model_json"
-            );
-            log.info("intermediate model json dir is: {}", modelJsonDir);
+            Path interModelJsonDir = mainPaths.getInterModelJsonDirPath();
+            log.info("intermediate model json dir is: {}", interModelJsonDir);
 
             Map<String, Object> startData =
                     startJsonFactory.create(model, previousOutput);
@@ -74,7 +72,7 @@ public class ExperimentService {
                     executorRegistry.get(model.getLanguage());
 
             Path endJson =
-                    executor.execute(model, startFile, endDir, modelJsonDir);
+                    executor.execute(model, startFile, endDir, interModelJsonDir);
 
             previousOutput =
                     objectMapper.readValue(endJson.toFile(), Map.class);
