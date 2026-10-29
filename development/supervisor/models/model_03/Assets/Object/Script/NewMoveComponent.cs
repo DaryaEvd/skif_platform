@@ -49,6 +49,7 @@ public class NewMoveComponent : MonoBehaviour
 
     void Start()
     {
+        if (UnityServerMode.Enabled) return;
 
 
         // �������� �� ������� ������� ��� ������ ������
@@ -90,6 +91,7 @@ public class NewMoveComponent : MonoBehaviour
 
     void Update()
     {
+        if (UnityServerMode.Enabled) return;
 
         // ���������, �������� �� newMenu
         if (newMenu != null)
@@ -1847,6 +1849,7 @@ public class NewMoveComponent : MonoBehaviour
     // ������ Home ��� ��������� ���. ���������� ������������ ����� MoveObj, ����� ������ UI/Start �������� ��� ���������.
     public void HomeAxis(string axis)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         switch (axis)
@@ -1878,6 +1881,7 @@ public class NewMoveComponent : MonoBehaviour
     // ���������� ���. ������������� ��������������� Move?�����, ����� MoveObj ��������� ���������.
     public void StopAxis(string axis)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         switch (axis)
@@ -1911,6 +1915,7 @@ public class NewMoveComponent : MonoBehaviour
     // start=true � ������; start=false � ����������.
     public void RotateAxis(string axis, bool start)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         if (axis == "phi")
@@ -1927,6 +1932,7 @@ public class NewMoveComponent : MonoBehaviour
     // ����� ������������� Move?����, ����� MoveObj �������� �������� Prespeed.
     public void SetSpeedAxis(string axis, int speed)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         switch (axis)
@@ -1964,6 +1970,7 @@ public class NewMoveComponent : MonoBehaviour
     // ������������� ����������� ��� ��������� ��� � ����������� ��������� ��������� � ��������� Presrelative + Move?�����.
     public void RelativeMoveAxis(string axis, float distance)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         switch (axis)
@@ -2010,6 +2017,7 @@ public class NewMoveComponent : MonoBehaviour
     // ���������� ����������� ��� ��������� ��� � ����������� ��������� ��������� � ��������� Presabsolute + Move?�����.
     public void AbsoluteMoveAxis(string axis, float distance)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         switch (axis)
@@ -2054,6 +2062,7 @@ public class NewMoveComponent : MonoBehaviour
 
     public void ResetAxis(string axis)
     {
+        if (UnityServerMode.Enabled) return;
         if (moveObj == null) return;
         axis = axis.ToLower();
         if (axis == "all")
@@ -2090,6 +2099,8 @@ public class NewMoveComponent : MonoBehaviour
 
     public string GetState()
     {
-        return "running";
+        if (moveObj == null) return "not_ready";
+        if (UnityServerMode.Enabled) return moveObj.ServerCalculationState;
+        return moveObj.HasMotion ? (Time.timeScale == 0 ? "paused" : "running") : "idle";
     }
 }

@@ -25,6 +25,8 @@ public abstract class AbstractDockerModelExecutor implements ModelExecutor {
     @Value("${supervisor.runtime.poll-millis:200}") private long pollMillis=200;
     protected AbstractDockerModelExecutor(MainPaths paths, ExperimentFiles files) { this.paths=paths; this.files=files; }
 
+    protected void validatePackage(ModelRequest model) throws Exception { }
+
     private class Session {
         final ModelRequest model; final ModelRunContext ctx; final String name, runId;
         String base; boolean created=false; long logs=0, publications=0;
@@ -136,6 +138,7 @@ public abstract class AbstractDockerModelExecutor implements ModelExecutor {
         }
         JsonNode run() throws Exception {
             ctx.stage("BUILDING");
+            validatePackage(model);
             Path root=paths.getProjectRoot().toAbsolutePath().normalize();
             Path iid=file("image.id");
             String dockerfile="models/"+model.getModelPath()+"/Dockerfile.api";
@@ -197,6 +200,12 @@ public abstract class AbstractDockerModelExecutor implements ModelExecutor {
                 throw new IOException("RESULT_INVALID: size or SHA-256 mismatch");
             JsonNode result=files.mapper.readTree(payload);
             validateResult(model.getLanguage(),result);
+            if (model.getLanguage()==ModelLanguage.UNITY) {
+                for(String parameter:List.of("angleDeg","speedDegPerSec")) {
+                    if(Double.compare(((Number)ctx.parameters.get(parameter)).doubleValue(),result.path(parameter).asDouble())!=0)
+                        throw new IOException("RESULT_INVALID: Unity returned different "+parameter);
+                }
+            }
             ctx.check();
             files.bytes(file("result.json"),payload); files.write(file("metadata.json"),metadata);
             collect();
@@ -218,6 +227,10 @@ public abstract class AbstractDockerModelExecutor implements ModelExecutor {
     }
     public static void validateResult(ModelLanguage language, JsonNode result) throws IOException {
         if (result==null || !result.isObject()) throw new IOException("RESULT_INVALID: expected object");
+        if (language==ModelLanguage.UNITY) {
+            UnityModelExecutor.validateUnityResult(result);
+            return;
+        }
         for (String field:language==ModelLanguage.PYTHON?new String[]{"E_start","E_end"}:new String[]{"max_dA","min_dA"})
             finite(result.path(field),field);
         if (language==ModelLanguage.C) {

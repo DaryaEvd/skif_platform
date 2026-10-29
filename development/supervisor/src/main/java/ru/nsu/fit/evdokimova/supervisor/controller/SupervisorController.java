@@ -26,7 +26,7 @@ public class SupervisorController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="400",description="Invalid configuration or conflicting energy binding"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="409",description="Another experiment is active")
     })
-    @Operation(summary="Запустить эксперимент Python → C",description="Асинхронная регистрация; пример запроса доступен через GET /api/experiments/example и в Try it out. Один активный эксперимент.")
+    @Operation(summary="Запустить эксперимент (Python → C или отдельная Unity)",description="Асинхронная регистрация; пример запроса доступен через GET /api/experiments/example и в Try it out. Один активный эксперимент.")
     public ResponseEntity<ExperimentResponse> startExperiment(@RequestBody RequestExperimentFromClient request) throws IOException {
         experimentService.processExperiment(request);
         return ResponseEntity.accepted().body(new ExperimentResponse(request.getExperimentId(),
@@ -35,6 +35,10 @@ public class SupervisorController {
     @GetMapping("/example") @Operation(summary="Получить готовый JSON эксперимента")
     public JsonNode example() throws IOException {
         return files.mapper.readTree(new ClassPathResource("examples/python-c.json").getInputStream());
+    }
+    @GetMapping("/example/unity") @Operation(summary="Готовый JSON отдельного Unity-эксперимента")
+    public JsonNode unityExample() throws IOException {
+        return files.mapper.readTree(new ClassPathResource("examples/unity-phi.json").getInputStream());
     }
     @GetMapping("/{id}/status") @Operation(summary="Статус эксперимента и отдельных моделей")
     public ExperimentStatus status(@PathVariable long id) throws IOException {return experimentService.status(id);}

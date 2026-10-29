@@ -51,6 +51,7 @@ public class HardcodedModelProvider implements IModelDefaultsProvider{
             }
 
 
+            case UNITY -> { /* Unity parameters are explicit; no hidden motion defaults. */ }
             default -> throw new IllegalArgumentException(
                     "No default parameters defined for model order " + model.getOrder()
             );

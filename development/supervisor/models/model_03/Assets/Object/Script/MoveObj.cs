@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,8 +21,8 @@ public class MoveObj : MonoBehaviour
     public bool phiObjRotate = false; // Вращение PhiObj
     private bool phiObjHome = false; // Дом phiObjHome
 
-    public int speedPhi = 36; // Скорость вращения  
-    public int PrespeedPhi = 36; // Скорость вращения  
+    public float speedPhi = 36; // Скорость вращения  
+    public float PrespeedPhi = 36; // Скорость вращения  
 
     public float relativeMovePhi = 0; //От текушего положения
     public float PresrelativeMovePhi = 0; //От текушего положения
@@ -116,6 +117,7 @@ public class MoveObj : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (UnityServerMode.Enabled) return;
         // Подписка на события нажатия кнопок
         startGame.onClick.AddListener(OnStartGameClicked);
         stopGame.onClick.AddListener(OnStopGameClicked);
@@ -123,6 +125,7 @@ public class MoveObj : MonoBehaviour
 
     void OnStartGameClicked()
     {
+        if (UnityServerMode.Enabled) return;
         rayTarget.ShowSpeedText(); // Вызываем публичный метод
         if (newMoveComponent != null)
         {
@@ -1007,6 +1010,7 @@ public class MoveObj : MonoBehaviour
 
     void OnStopGameClicked()
     {
+        if (UnityServerMode.Enabled) return;
         // Останавливаем игру, устанавливая timeScale в 0
         Time.timeScale = 0;
         // Логика для остановки игры или выполнения других действий
@@ -1017,6 +1021,7 @@ public class MoveObj : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (UnityServerMode.Enabled) return;
         // Функционал Phi
         if (phiObj != null)
         {
@@ -1103,7 +1108,7 @@ public class MoveObj : MonoBehaviour
 
             if (chekAbsoluteMovePhi && phiObj != null)
             {
-                int spidPhicurent = Mathf.Abs(speedPhi);
+                float spidPhicurent = Mathf.Abs(speedPhi);
 
                 if (Mathf.Abs(currentPhi - absoluteMovePhi) > 0.1f) // Проверка на достижение цели
                 {
@@ -1739,4 +1744,50 @@ public class MoveObj : MonoBehaviour
         Debug.Log("All axes stopped");
     }
 
+
+    // Called only on the Unity main thread by the explicit server scenario.
+    public string ServerCalculationState = "idle";
+    public bool HasMotion => phiObjRotate || phiObjHome || сhekRelativeMovePhi || chekAbsoluteMovePhi ||
+        OmegaObjHome || сhekRelativeMoveOmega || chekAbsoluteMoveOmega ||
+        KappaObjHome || сhekRelativeMoveKappa || chekAbsoluteMoveKappa ||
+        ThetaObjHome || сhekRelativeMoveTheta || chekAbsoluteMoveTheta ||
+        DetectorObjHome || сhekRelativeMoveDetector || chekAbsoluteMoveDetector;
+
+    public void StopServerMotion()
+    {
+        phiObjRotate = phiObjHome = сhekRelativeMovePhi = chekAbsoluteMovePhi = false;
+        OmegaObjHome = сhekRelativeMoveOmega = chekAbsoluteMoveOmega = false;
+        KappaObjHome = сhekRelativeMoveKappa = chekAbsoluteMoveKappa = false;
+        ThetaObjHome = сhekRelativeMoveTheta = chekAbsoluteMoveTheta = false;
+        DetectorObjHome = сhekRelativeMoveDetector = chekAbsoluteMoveDetector = false;
+        if (newMoveComponent != null)
+            newMoveComponent.allMove = newMoveComponent.phiMove = newMoveComponent.omegaMove =
+            newMoveComponent.kappaMove = newMoveComponent.thetaMove = newMoveComponent.detectorMove = 0;
+    }
+
+    public void BeginServerPhi(float angleDeg, float speedDegPerSec)
+    {
+        StopServerMotion();
+        PresrelativeMovePhi = relativeMovePhi = angleDeg;
+        PrespeedPhi = speedPhi = speedDegPerSec;
+        сhekRelativeMovePhi = true;
+    }
+
+    public void StepServerPhi(float deltaTime)
+    {
+        // Same positive-speed relative-Phi formula and tolerance as the interactive branch.
+        if (!сhekRelativeMovePhi) return;
+        if (Mathf.Abs(relativeMovePhi) > 0.01f)
+        {
+            float step = Mathf.Sign(relativeMovePhi) * Mathf.Min(speedPhi * deltaTime, Mathf.Abs(relativeMovePhi));
+            if (step >= 180f) throw new InvalidOperationException("Frame rotation is too large to unwrap safely");
+            phiObj.Rotate(step, 0, 0, Space.Self);
+            relativeMovePhi -= step;
+        }
+        else
+        {
+            сhekRelativeMovePhi = false;
+            relativeMovePhi = 0;
+        }
+    }
 }

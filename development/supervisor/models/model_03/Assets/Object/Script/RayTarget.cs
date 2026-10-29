@@ -24,6 +24,7 @@ public class RayTarget : MonoBehaviour
 
     void Start()
     {
+        if (UnityServerMode.Enabled) return;
         panelError.SetActive(false);
         ButtonSpeed.onClick.AddListener(OnButtonClickSpeed);
         speedTime.gameObject.SetActive(false);
@@ -37,6 +38,7 @@ public class RayTarget : MonoBehaviour
             return;
         }
         IsColliding = true;
+        if (UnityServerMode.Enabled) return;
         panelError.SetActive(true);
         textKappa.text = "Kappa Absolute: " + (int)Mathf.DeltaAngle(0, moveObj.OmegaObj.transform.localEulerAngles.z);
         textOmega.text = "Omega Absolute: " + (int)Mathf.DeltaAngle(0, moveObj.KappaObj.transform.localEulerAngles.y);
@@ -51,12 +53,14 @@ public class RayTarget : MonoBehaviour
             return;
         }
         IsColliding = false;
+        if (UnityServerMode.Enabled) return;
         panelError.SetActive(false);
 
     }
 
     void OnButtonClickSpeed()
     {
+        if (UnityServerMode.Enabled) return;
         // Циклическое переключение между скоростями
         speedState = (speedState +1) % 3;  // Теперь 3 состояния: 0, 1, 2
 

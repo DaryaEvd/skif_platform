@@ -91,6 +91,12 @@ class ExperimentServiceTest {
         assertThat(published.path("metadata").path("downloadUrl").asText()).isEqualTo("/api/experiments/42/models/1/result");
         assertThat(published.path("resultUrl").asText()).isEqualTo("/api/experiments/42/models/1/result");
     }
+    @Test void unityCannotBeMixedIntoExistingChain() throws Exception {
+        setup();var r=request();var u=r.getModels().getFirst();
+        u.setLanguage(ModelLanguage.UNITY);u.setModelPath(Path.of("model_03"));
+        u.setParameters(Map.of("angleDeg",15.5,"speedDegPerSec",7.75));
+        assertThatThrownBy(()->service.processExperiment(r)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("separate");
+    }
     @Test void conflictRejectedBeforeRegistration() throws Exception {
         setup();var r=request();r.getModels().get(1).getParameters().put("E_start",30);
         assertThatThrownBy(()->service.processExperiment(r)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("conflicting");

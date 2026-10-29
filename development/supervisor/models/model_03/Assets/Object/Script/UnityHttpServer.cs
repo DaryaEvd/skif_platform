@@ -20,6 +20,8 @@ public class UnityHttpServer : MonoBehaviour
     [SerializeField]
     private NewMoveComponent scannerController;
 
+    private UnityModelApi modelApi;
+    private bool serverMode;
     private HttpListener httpListener;
     private Thread serverThread;
     private bool isRunning = false;
@@ -39,10 +41,17 @@ public class UnityHttpServer : MonoBehaviour
             }
         }
 
+        serverMode = UnityServerMode.Enabled;
+        if (serverMode)
+        {
+            port = int.TryParse(Environment.GetEnvironmentVariable("PORT"), out int configuredPort) ? configuredPort : 8080;
+            modelApi = gameObject.AddComponent<UnityModelApi>();
+            modelApi.Initialize(scannerController.moveObj);
+        }
         try
         {
             httpListener = new HttpListener();
-            httpListener.Prefixes.Add($"http://0.0.0.0:{port}/");
+            httpListener.Prefixes.Add($"http://*:{port}/");
             httpListener.Start();
             isRunning = true;
 
@@ -77,7 +86,18 @@ public class UnityHttpServer : MonoBehaviour
 
                 try
                 {
-                    if (method == "GET")
+                    if (serverMode && request.Url.AbsolutePath.StartsWith("/api/v1", StringComparison.Ordinal))
+                    {
+                        if (request.ContentLength64 > 1048576) { SendResponse(response, 413, "{\"error\":{\"code\":\"BODY_TOO_LARGE\"}}"); continue; }
+                        string apiBody = "";
+                        if (method == "POST") using (var reader = new System.IO.StreamReader(request.InputStream, request.ContentEncoding)) apiBody = reader.ReadToEnd();
+                        QueueMainThreadAction(() => modelApi.Dispatch(context, apiBody));
+                    }
+                    else if (serverMode && method == "POST" && path.StartsWith("/api/scanner"))
+                    {
+                        SendResponse(response, 409, "{\"error\":{\"code\":\"SCANNER_DISABLED_IN_SERVER_MODE\",\"message\":\"Use /api/v1/runs\"}}");
+                    }
+                    else if (method == "GET")
                     {
                         HandleGetRequest(path, response);
                     }
@@ -116,8 +136,7 @@ public class UnityHttpServer : MonoBehaviour
     {
         if (path == "/api/scanner/state")
         {
-            string stateJson = GetScannerState();
-            SendResponse(response, HTTP_OK, stateJson, "application/json");
+            QueueMainThreadAction(() => SendResponse(response, HTTP_OK, GetScannerState(), "application/json"));
         }
         else if (path == "/api/scanner/health")
         {

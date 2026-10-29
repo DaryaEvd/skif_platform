@@ -15,6 +15,7 @@ public class JsonZeroValueFilter : MonoBehaviour
 
     void Start()
     {
+        if (UnityServerMode.Enabled) return;
         // Автоматические пути к файлам
         string inputPath = Path.Combine(Application.streamingAssetsPath, "input.json");
         string outputPath = Path.Combine(Application.streamingAssetsPath, "output.json");

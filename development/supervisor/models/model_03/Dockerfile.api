@@ -1,0 +1,13 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libxxf86vm1 \
+    libxkbcommon0 libglib2.0-0 libx11-6 libx11-xcb1 libxcb1 libxext6 \
+    libxfixes3 libxrender1 libxtst6 libfontconfig1 libasound2 libgtk-3-0 \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY models/model_03/Builds/ModelApi/ /app/
+RUN test -s model-api-build.json && test -s model_Data/Managed/Assembly-CSharp.dll && chmod +x model.x86_64 && mkdir /runs
+ENV MODEL_SERVER_MODE=1 PORT=8080 RUNS_ROOT=/runs
+EXPOSE 8080
+CMD ["/app/model.x86_64", "-batchmode", "-nographics", "-modelApi", "-logFile", "-"]

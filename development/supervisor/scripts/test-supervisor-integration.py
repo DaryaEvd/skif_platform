@@ -73,7 +73,7 @@ def start(config, name):
 call('GET', '/swagger-ui/index.html', destination=out / 'swagger-ui.html')
 api = call('GET', '/v3/api-docs', destination=out / 'openapi.json')
 assert '202' in api['paths']['/api/experiments/start']['post']['responses']
-assert api['paths']['/api/experiments/start']['post']['requestBody']['content']['application/json']['example']['models'][0]['language'] == 'PYTHON'
+assert api['paths']['/api/experiments/start']['post']['requestBody']['content']['application/json']['examples']['Python → C']['value']['models'][0]['language'] == 'PYTHON'
 example = call('GET', '/api/experiments/example', destination=out / 'example.json')
 conflict = copy.deepcopy(example)
 conflict['models'][1]['parameters']['E_start'] = 30

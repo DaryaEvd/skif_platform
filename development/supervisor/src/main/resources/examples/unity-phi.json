@@ -1,0 +1,17 @@
+{
+  "experimentName": "Unity: finite fractional relative Phi",
+  "models": [
+    {
+      "modelId": "unity-phi",
+      "name": "Unity Phi",
+      "order": 1,
+      "version": "phi-relative-v1",
+      "language": "UNITY",
+      "modelPath": "model_03",
+      "parameters": {
+        "angleDeg": 15.5,
+        "speedDegPerSec": 7.75
+      }
+    }
+  ]
+}

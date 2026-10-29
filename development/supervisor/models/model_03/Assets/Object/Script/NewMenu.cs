@@ -54,6 +54,7 @@ public class NewMenu : MonoBehaviour
 
     void Start()
     {
+        if (UnityServerMode.Enabled) return;
         ButtonShow.onClick.AddListener(OnButtonClickShow);
         ButtonAll.onClick.AddListener(() => ShowPanel(panelAll, false, false));
         ButtonPhi.onClick.AddListener(() => ShowPanel(panelPhi, false, false));

@@ -19,7 +19,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Component
 public class StartJsonFactory {
-    private static final Logger log = LoggerFactory.getLogger(PythonModelExecutor.class);
+    private static final Logger log = LoggerFactory.getLogger(StartJsonFactory.class);
 
     private final ObjectMapper objectMapper;
     private final IModelDefaultsProvider defaultsProvider;

@@ -83,14 +83,17 @@ public class ExperimentService {
     private void validate(RequestExperimentFromClient request) {
         if(request==null || request.getExperimentName()==null || request.getExperimentName().isBlank()
             || request.getModels()==null || request.getModels().isEmpty()) throw new IllegalArgumentException("experimentName and nonempty models required");
+        boolean unity=request.getModels().stream().anyMatch(m->m!=null && m.getLanguage()==ModelLanguage.UNITY);
+        if(unity && request.getModels().size()!=1) throw new IllegalArgumentException("Unity is supported only as a separate one-model experiment");
         Set<Integer> orders=new HashSet<>();Set<String> ids=new HashSet<>();
         for(ModelRequest model:request.getModels()) {
             if(model==null || model.getOrder()==null || model.getOrder()<1 || !orders.add(model.getOrder())
                || model.getModelId()==null || !model.getModelId().matches("[A-Za-z0-9_-]{1,100}") || !ids.add(model.getModelId())
                || model.getName()==null || model.getParameters()==null) throw new IllegalArgumentException("Each model needs unique modelId/order, name and parameters");
-            if(model.getLanguage()!=ModelLanguage.PYTHON && model.getLanguage()!=ModelLanguage.C)
-                throw new IllegalArgumentException("Only existing PYTHON and C executors are supported");
-            String expected=model.getLanguage()==ModelLanguage.PYTHON?"model_01":"model_02";
+            if(model.getLanguage()!=ModelLanguage.PYTHON && model.getLanguage()!=ModelLanguage.C && model.getLanguage()!=ModelLanguage.UNITY)
+                throw new IllegalArgumentException("Only PYTHON, C and separate UNITY are supported");
+            String expected=switch(model.getLanguage()) {case PYTHON -> "model_01";case UNITY -> "model_03";default -> "model_02";};
+            if(model.getLanguage()==ModelLanguage.UNITY) UnityModelExecutor.validateParameters(model.getParameters());
             if(model.getModelPath()==null || !model.getModelPath().toString().equals(expected))
                 throw new IllegalArgumentException("modelPath must be "+expected+" for "+model.getLanguage());
         }
