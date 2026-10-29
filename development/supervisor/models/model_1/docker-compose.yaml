@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  model1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: model1
+    volumes:
+      - ./data:/data
+    environment:
+      - INPUT_FILE=/data/start1.json
+      - OUTPUT_FILE=/data/end1.json
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

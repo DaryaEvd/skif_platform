@@ -12,6 +12,8 @@ import java.nio.file.Path;
 @Getter
 @Setter
 public class MainPaths {
+    private Path projectRoot = Path.of(".");
+    private Path experimentsRoot = Path.of("experiment-data");
     private Path modelsRootDirPath;
     private Path startJsonDirPath;
     private Path endJsonDirPath;

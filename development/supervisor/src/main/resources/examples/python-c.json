@@ -1,0 +1,53 @@
+{
+  "experimentName": "Python → C: real HTTP calculation",
+  "models": [
+    {
+      "modelId": "python",
+      "name": "shtorka_model",
+      "order": 1,
+      "version": "1.0",
+      "language": "PYTHON",
+      "modelPath": "model_01",
+      "parameters": {
+        "E_input": 130,
+        "h_y_1": 0.8,
+        "h_y_2": 0.8,
+        "h_x_1": 0.8,
+        "h_x_2": 0.1
+      }
+    },
+    {
+      "modelId": "c",
+      "name": "difract_model",
+      "order": 2,
+      "version": "1.0",
+      "language": "C",
+      "modelPath": "model_02",
+      "parameters": {
+        "c_x": 0,
+        "c_y": 3950000000,
+        "c_z": 0,
+        "s_x": 0,
+        "s_y": 0,
+        "s_z": 0,
+        "omega": 0,
+        "kappa": 0,
+        "phi": 0,
+        "xSampleSize": 600000,
+        "ySampleSize": 600000,
+        "zSampleSize": 600000,
+        "d_x": 0,
+        "d_y": 55000000,
+        "d_z": 0,
+        "theta": 0,
+        "beta": 0,
+        "gammaValue": 0,
+        "sU": 5000,
+        "sB": 5000,
+        "sR": 5000,
+        "sL": 5000,
+        "t": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "runId": "c-001",
+  "experimentId": "exp-001",
+  "parameters": {
+    "c_x": 0,
+    "c_y": 3950000000,
+    "c_z": 0,
+    "s_x": 0,
+    "s_y": 0,
+    "s_z": 0,
+    "omega": 0,
+    "kappa": 0,
+    "phi": 0,
+    "xSampleSize": 600000,
+    "ySampleSize": 600000,
+    "zSampleSize": 600000,
+    "d_x": 0,
+    "d_y": 55000000,
+    "d_z": 0,
+    "theta": 0,
+    "beta": 0,
+    "gammaValue": 0,
+    "sU": 5000,
+    "sB": 5000,
+    "sR": 5000,
+    "sL": 5000,
+    "E_start": 30,
+    "E_end": 30,
+    "t": 1
+  }
+}

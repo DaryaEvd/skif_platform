@@ -13,8 +13,8 @@ public class HardcodedModelProvider implements IModelDefaultsProvider{
 
         Map<String, Object> params = new HashMap<>();
 
-        switch (model.getOrder()) {
-            case 1 ->  {
+        switch (model.getLanguage()) {
+            case PYTHON ->  {
                 params.put("E_input", 130);
                 params.put("h_y_1", 0.8);
                 params.put("h_y_2", 0.8);
@@ -22,7 +22,7 @@ public class HardcodedModelProvider implements IModelDefaultsProvider{
                 params.put("h_x_2", 0.1);
             }
 
-            case 2 -> {
+            case C -> {
                 params.put("c_x", 0L);
                 params.put("c_y", 3950000000L);
                 params.put("c_z", 0L);

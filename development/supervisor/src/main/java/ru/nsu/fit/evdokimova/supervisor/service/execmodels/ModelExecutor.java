@@ -1,17 +1,8 @@
 package ru.nsu.fit.evdokimova.supervisor.service.execmodels;
-
-import ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage;
-import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
-
-import java.nio.file.Path;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import ru.nsu.fit.evdokimova.supervisor.model.*;
+import ru.nsu.fit.evdokimova.supervisor.service.runtime.ModelRunContext;
 public interface ModelExecutor {
     boolean supports(ModelLanguage language);
-    Path execute(
-            ModelRequest model,
-            Path startFile,
-            Path endDir,
-            Path modelJsonDir
-    ) throws Exception;
-
+    JsonNode execute(ModelRequest model, ModelRunContext context) throws Exception;
 }

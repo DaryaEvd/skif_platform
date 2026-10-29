@@ -18,35 +18,17 @@ class StartJsonFactoryTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void createMergesDefaultsPreviousOutputAndRequestParametersInPriorityOrder() {
-        IModelDefaultsProvider defaultsProvider = model -> Map.of(
-                "defaultOnly", 1,
-                "overriddenByPrevious", "default",
-                "overriddenByRequest", "default"
-        );
-        StartJsonFactory factory = new StartJsonFactory(objectMapper, defaultsProvider);
-
-        ModelRequest model = new ModelRequest();
-        model.setName("model");
-        model.setParameters(Map.of(
-                "requestOnly", true,
-                "overriddenByRequest", "request"
-        ));
-
-        Map<String, Object> result = factory.create(
-                model,
-                Map.of(
-                        "previousOnly", 2,
-                        "overriddenByPrevious", "previous",
-                        "overriddenByRequest", "previous"
-                )
-        );
-
-        assertThat(result).containsEntry("defaultOnly", 1);
-        assertThat(result).containsEntry("previousOnly", 2);
-        assertThat(result).containsEntry("requestOnly", true);
-        assertThat(result).containsEntry("overriddenByPrevious", "previous");
-        assertThat(result).containsEntry("overriddenByRequest", "request");
+    void bindsOnlyEnergyAndRejectsConflictingStaticValues() {
+        var factory = new StartJsonFactory(objectMapper, model -> Map.of("E_start",30,"E_end",30,"t",1));
+        var model = new ModelRequest();
+        model.setLanguage(ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage.C);
+        model.setParameters(Map.of("t",2));
+        var result = factory.create(model,Map.of("E_start",31.5,"E_end",31.5,"unrelated",42));
+        assertThat(result).containsEntry("E_start",31.5).containsEntry("E_end",31.5).containsEntry("t",2);
+        assertThat(result).doesNotContainKey("unrelated");
+        model.setParameters(Map.of("E_start",31.5));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> factory.create(model,Map.of("E_start",31.5,"E_end",31.5)))
+            .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("conflicts");
     }
 
     @Test

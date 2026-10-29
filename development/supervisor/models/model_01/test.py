@@ -1,7 +1,8 @@
 import json
+import os
 
 # Чтение данных из входного файла
-with open('/input/start.json', 'r') as file:
+with open(os.environ.get('MODEL_INPUT', '/input/start.json'), 'r') as file:
     data = json.load(file)
 
 # Извлечение значений из данных
@@ -20,7 +21,7 @@ output_data = {
     'E_end': E_output
 }
 
-with open('/output/end.json', 'w') as file:
+with open(os.environ.get('MODEL_OUTPUT', '/output/end.json'), 'w') as file:
     json.dump(output_data, file, indent=2)
 
 '''

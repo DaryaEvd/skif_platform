@@ -15,7 +15,8 @@ class HardcodedModelProviderTest {
     @Test
     void returnsDefaultsForFirstModel() {
         ModelRequest model = new ModelRequest();
-        model.setOrder(1);
+        model.setOrder(17);
+        model.setLanguage(ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage.PYTHON);
 
         Map<String, Object> defaults = provider.getDefaultParameters(model);
 
@@ -30,7 +31,8 @@ class HardcodedModelProviderTest {
     @Test
     void returnsDefaultsForSecondModel() {
         ModelRequest model = new ModelRequest();
-        model.setOrder(2);
+        model.setOrder(29);
+        model.setLanguage(ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage.C);
 
         Map<String, Object> defaults = provider.getDefaultParameters(model);
 
@@ -46,6 +48,7 @@ class HardcodedModelProviderTest {
     void throwsForUnknownModelOrder() {
         ModelRequest model = new ModelRequest();
         model.setOrder(99);
+        model.setLanguage(ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage.JAVA);
 
         assertThatThrownBy(() -> provider.getDefaultParameters(model))
                 .isInstanceOf(IllegalArgumentException.class)

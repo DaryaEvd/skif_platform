@@ -4,8 +4,8 @@
 
 int main() {
 
-	algorithm_body(1);
-	err_rate();
+	if (algorithm_body(1) != 0) return 1;
+	if (err_rate() != 0) return 1;
 
 	return 0;
 }

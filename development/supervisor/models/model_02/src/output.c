@@ -33,7 +33,7 @@ int output() {
 	char* json_str = cJSON_Print(json);
 
     printf("you're just before end.json!!!");
-	FILE* file = fopen("/output/end.json", "w");
+	FILE* file = fopen(getenv("MODEL_OUTPUT") ? getenv("MODEL_OUTPUT") : "/output/end.json", "w");
 	fflush(stdout);
 
 	if (!file) {
@@ -43,16 +43,16 @@ int output() {
 		return 1;
 	}
 
-	fprintf(file, "%s\n", json_str);
+	int write_failed = fprintf(file, "%s\n", json_str) < 0;
 
     printf("you're after end.json!!!");
     fflush(stdout);
 
 	cJSON_Delete(json);
-	fclose(file);
+	int close_failed = fclose(file) != 0;
 	free(json_str);
 
-	return 0;
+	return (write_failed || close_failed) ? 1 : 0;
 }
 
 int err_rate() {
@@ -86,12 +86,13 @@ int err_rate() {
 	char* json_str = cJSON_Print(json);
 	cJSON_Delete(json);
 
-	FILE* file = fopen("/json/error_rate.json", "w");
-	fprintf(file, "%s", json_str);
-	fclose(file);
+	FILE* file = fopen(getenv("MODEL_ERROR_RATE") ? getenv("MODEL_ERROR_RATE") : "/json/error_rate.json", "w");
+	if (!file) { perror("error_rate.json"); free(json_str); return 1; }
+	int write_failed = fprintf(file, "%s", json_str) < 0;
+	int close_failed = fclose(file) != 0;
 	free(json_str);
 
-	return 0;
+	return (write_failed || close_failed) ? 1 : 0;
 }
 
 int draft() {

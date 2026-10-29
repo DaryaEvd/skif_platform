@@ -1,0 +1,7 @@
+FROM python:3.11-slim-bookworm
+WORKDIR /opt/wrapper
+COPY models/http_wrapper/server.py models/http_wrapper/adapters.py ./
+COPY models/model_01/test.py /opt/model/test.py
+ENV MODEL_KIND=python RUNS_ROOT=/runs
+EXPOSE 8080
+CMD ["python", "-u", "server.py"]

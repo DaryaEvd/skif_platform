@@ -1,0 +1,16 @@
+FROM python:3.11-slim-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY models/model_02/src ./src
+COPY models/model_02/include ./include
+COPY models/model_02/cJSON/cJSON.c models/model_02/cJSON/cJSON.h ./cJSON/
+RUN gcc -O2 -o /difract src/*.c cJSON/cJSON.c -lm
+
+FROM python:3.11-slim-bookworm
+WORKDIR /opt/wrapper
+COPY models/http_wrapper/server.py models/http_wrapper/adapters.py ./
+COPY --from=builder /difract /opt/model/difract
+COPY inter_model_json_files/sampleMaterial.json /opt/data/sampleMaterial.json
+ENV MODEL_KIND=c RUNS_ROOT=/runs
+EXPOSE 8080
+CMD ["python", "-u", "server.py"]

@@ -38,7 +38,7 @@ class ModelExecutorRegistryTest {
             }
 
             @Override
-            public Path execute(ModelRequest model, Path startFile, Path endDir, Path modelJsonDir) {
+            public com.fasterxml.jackson.databind.JsonNode execute(ModelRequest model, ru.nsu.fit.evdokimova.supervisor.service.runtime.ModelRunContext context) {
                 throw new UnsupportedOperationException("Not needed in registry tests");
             }
         };

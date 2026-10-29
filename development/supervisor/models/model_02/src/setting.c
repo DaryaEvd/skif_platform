@@ -38,12 +38,13 @@ char* readFile(const char* filename) {
 	}
 	size_t read_len = fread(buffer, 1, len, file);
 	buffer[read_len] = '\0';
+	fclose(file);
 	return buffer;
 }
 
 /*
 int setData() {
-	char* buffer = readFile("/input/start.json");
+	char* buffer = readFile(getenv("MODEL_INPUT") ? getenv("MODEL_INPUT") : "/input/start.json");
     if (!buffer) {
         fprintf(stderr, "start.json not ready\n");
         exit(1);
@@ -98,7 +99,7 @@ int setData() {
 
 ///*
 int setData(void) {
-    char* buffer = readFile("/input/start.json");
+    char* buffer = readFile(getenv("MODEL_INPUT") ? getenv("MODEL_INPUT") : "/input/start.json");
     if (!buffer) {
         fprintf(stderr, "start.json not ready\n");
         return -1;
@@ -179,17 +180,34 @@ int setData(void) {
 //*/
 
 int setSampleMaterial() {
-	char* buffer = readFile("/json/sampleMaterial.json");
+	char* buffer = readFile(getenv("MODEL_MATERIAL") ? getenv("MODEL_MATERIAL") : "/json/sampleMaterial.json");
+	if (!buffer) return -1;
 	cJSON* json_data = cJSON_Parse(buffer);
+	free(buffer);
+	if (!json_data) return -1;
 	cJSON* rho_json = cJSON_GetObjectItemCaseSensitive(json_data, "rho");
 	cJSON* M_json = cJSON_GetObjectItemCaseSensitive(json_data, "molar_mass");
 	cJSON* cross_sections = cJSON_GetObjectItemCaseSensitive(json_data, "cross_sections");
 
 	int array_size = cJSON_GetArraySize(cross_sections);
+	if (!cJSON_IsNumber(rho_json) || !cJSON_IsNumber(M_json) ||
+	    rho_json->valuedouble <= 0 || M_json->valuedouble <= 0 ||
+	    !cJSON_IsArray(cross_sections) || array_size < 2) {
+		cJSON_Delete(json_data);
+		return -1;
+	}
+	for (int row = 0; row < array_size; ++row) {
+		cJSON* entry = cJSON_GetArrayItem(cross_sections, row);
+		if (!cJSON_IsArray(entry) || cJSON_GetArraySize(entry) != 4) { cJSON_Delete(json_data); return -1; }
+		for (int col = 0; col < 4; ++col) {
+			if (!cJSON_IsNumber(cJSON_GetArrayItem(entry, col))) { cJSON_Delete(json_data); return -1; }
+		}
+	}
 
 	rho = rho_json->valuedouble;
 	M = M_json->valuedouble;
 	s_list = (double*)malloc((array_size * 4 + 3) * sizeof(double));
+	if (!s_list) { cJSON_Delete(json_data); return -1; }
 
 
 	cJSON* cur_item = NULL;

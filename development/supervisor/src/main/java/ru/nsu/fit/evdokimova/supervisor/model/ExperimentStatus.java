@@ -14,10 +14,12 @@ import java.util.Map;
 @AllArgsConstructor
 public class ExperimentStatus {
     private Long experimentId;
+    private String stage;
+    private String errorMessage;
     private String currentModel;
     private int currentOrder;
     private int totalModels;
-    private String status; // "RUNNING", "COMPLETED", "FAILED"
+    private String status; // RUNNING, CANCELLING, COMPLETED, FAILED, CANCELLED
     private LocalDateTime lastUpdated;
     private Map<Integer, ModelStatus> modelStatuses;
 
@@ -26,6 +28,10 @@ public class ExperimentStatus {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ModelStatus {
+        private String modelId;
+        private String runId;
+        private String stage;
+        private boolean resultAvailable;
         private String modelName;
         private String status;
         private LocalDateTime startTime;

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  unity-api-model:
+    build: .
+    container_name: unity_model_container
+    ports:
+      - "5030:5030"
+    
+    healthcheck:
+      # Проверяем конкретно localhost внутри контейнера. 
+      # Если в C# стоит 0.0.0.0, этот запрос внутри контейнера сработает.
+      # ЗАМЕНИТЕ / на реальный путь вашего API, если корень не обрабатывается.
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5030/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s # Даем Unity 20 секунд на полный запуск перед первой проверкой
+
+    restart: unless-stopped

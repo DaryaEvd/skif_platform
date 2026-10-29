@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import ru.nsu.fit.evdokimova.supervisor.model.ModelRequest;
+import ru.nsu.fit.evdokimova.supervisor.model.ModelLanguage;
 import ru.nsu.fit.evdokimova.supervisor.service.createparams.IModelDefaultsProvider;
 import ru.nsu.fit.evdokimova.supervisor.service.execmodels.PythonModelExecutor;
 
@@ -33,11 +34,19 @@ public class StartJsonFactory {
 
         result.putAll(defaultParameters);
 
-        if (previousOutput != null) {
-            result.putAll(previousOutput);
-        }
-
         result.putAll(model.getParameters());
+        if (previousOutput != null && model.getLanguage() == ModelLanguage.C) {
+            for (String field : new String[]{"E_start", "E_end"}) {
+                if (model.getParameters().containsKey(field)) {
+                    throw new IllegalArgumentException("C parameter " + field + " conflicts with Python output binding");
+                }
+                Object value = previousOutput.get(field);
+                if (!(value instanceof Number number) || !Double.isFinite(number.doubleValue())) {
+                    throw new IllegalArgumentException("Python output missing finite " + field);
+                }
+                result.put(field, value);
+            }
+        }
 
         log.info(
                 "Created start data for model named {} with amount of params = {}",

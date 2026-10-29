@@ -106,9 +106,9 @@ int algorithm_body(int exp_count) {
 	compTime = time(NULL);
 
 	// ��������� ������� ������
-	setData();
+	if (setData() != 0) return -1;
 	// ��������� ������ ��� �������� ������� (���������, �������� �����, ������� �������)
-	setSampleMaterial();
+	if (setSampleMaterial() != 0) return -1;
 //	printf("%lf\n", rho);
 
 	// ���������� ���������� ����������
@@ -126,7 +126,7 @@ int algorithm_body(int exp_count) {
 
 	free(s_list);
 
-	output();
+	if (output() != 0) return -1;
 
 	return 0;
 }

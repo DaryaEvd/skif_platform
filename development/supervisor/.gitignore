@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Local model API test results (kept on disk, not committed)
+/test-results/
+/experiment-data/

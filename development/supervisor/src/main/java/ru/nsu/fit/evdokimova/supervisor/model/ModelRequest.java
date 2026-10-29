@@ -19,6 +19,8 @@ public class ModelRequest {
     private Integer order;
     private String version;
     private ModelLanguage language;
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer.class)
+    @io.swagger.v3.oas.annotations.media.Schema(type = "string", example = "model_01")
     private Path modelPath;
 
     private Map<String, Object> parameters = new HashMap<>();
